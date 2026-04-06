@@ -121,10 +121,10 @@ newsRoutes.put(
     }
 
     if (imageUrl !== undefined) {
-      if (imageUrl !== null && typeof imageUrl !== "string") {
-        return res.status(400).json({ message: "imageUrl must be a string or null" });
+      if (typeof imageUrl !== "string") {
+        return res.status(400).json({ message: "imageUrl must be a string" });
       }
-      data.imageUrl = imageUrl === null ? null : imageUrl?.trim() || null;
+      data.imageUrl = imageUrl.trim() || null;
     }
 
     if (published !== undefined) {
