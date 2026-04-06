@@ -7,6 +7,7 @@ import { usersRoutes } from "./routes/users.routes";
 import { authRoutes } from "./routes/auth.routes";
 import { profileRoutes } from "./routes/profile.routes";
 import { uploadRoutes } from "./routes/upload.routes";
+import { uploadNewsRoutes } from "./routes/uploadNews.routes";
 import { newsRoutes } from "./routes/news.routes";
 
 const app = express();
@@ -33,6 +34,7 @@ app.use("/users", usersRoutes);
 app.use("/auth", authRoutes);
 app.use("/profile", profileRoutes);
 app.use("/upload", uploadRoutes);
+app.use("/upload/news", uploadNewsRoutes);
 app.use("/news", newsRoutes);
 app.use(errorHandler);
 
