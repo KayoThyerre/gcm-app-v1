@@ -13,6 +13,7 @@ type SidebarItem = {
 const MAIN_SIDEBAR_ITEMS: SidebarItem[] = [
   { label: "Dashboard", path: "/home", icon: "📊", roles: ["ADMIN", "USER"] },
   { label: "Users", path: "/dashboard/admin/users", icon: "👤", roles: ["ADMIN"] },
+  { label: "News", path: "/home/news", icon: "N", roles: ["ADMIN"] },
 ];
 
 const SETTINGS_SIDEBAR_ITEMS: SidebarItem[] = [

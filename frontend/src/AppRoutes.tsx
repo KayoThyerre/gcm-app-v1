@@ -9,6 +9,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { AdminUsers } from "./pages/AdminUsers";
 import { Profile } from "./pages/Profile";
 import { ProfileSecurity } from "./pages/ProfileSecurity";
+import { News } from "./pages/News";
 import { CheckEmail } from "./pages/CheckEmail";
 import { PrivateRoute } from "../src/routes/PrivateRoute";
 import { PrivateLayout } from "./layouts/PrivateLayout";
@@ -57,6 +58,7 @@ const routes: AppRoute[] = [
         children: [
           {path: "",element: <Dashboard />,},
           {path: "users", element: <Users />,},
+          {path: "news", element: <News />,},
           {path: "reports", element: <Reports />,},
           {path: "settings", element: <Settings />,},
         ],
