@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { api } from "../services/api";
 
@@ -7,13 +7,30 @@ type UploadNewsResponse = {
 };
 
 export function News() {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [published, setPublished] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreview(null);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(imageFile);
+    setImagePreview(previewUrl);
+
+    return () => {
+      URL.revokeObjectURL(previewUrl);
+    };
+  }, [imageFile]);
 
   function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     setImageFile(event.target.files?.[0] ?? null);
@@ -62,9 +79,13 @@ export function News() {
       setTitle("");
       setContent("");
       setImageFile(null);
+      setImagePreview(null);
       setPublished(false);
       setSuccessMessage("Noticia criada com sucesso.");
-      event.currentTarget.reset();
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } catch {
       setErrorMessage("Nao foi possivel criar a noticia.");
     } finally {
@@ -135,7 +156,15 @@ export function News() {
           >
             Imagem
           </label>
+          {imagePreview ? (
+            <img
+              src={imagePreview}
+              alt="Preview da imagem da noticia"
+              className="max-w-[300px] rounded-md border"
+            />
+          ) : null}
           <input
+            ref={fileInputRef}
             id="image"
             type="file"
             accept=".jpg,.jpeg,.png,.webp"
@@ -160,7 +189,7 @@ export function News() {
         <button
           type="submit"
           disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-blue-700 transition disabled:opacity-60"
+          className="bg-blue-600 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-blue-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? "Criando..." : "Criar noticia"}
         </button>
