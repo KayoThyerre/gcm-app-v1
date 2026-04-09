@@ -160,7 +160,7 @@ export function News() {
             <img
               src={imagePreview}
               alt="Preview da imagem da noticia"
-              className="max-w-[300px] rounded-md border"
+              className="mb-[10px] w-full max-w-[200px] max-h-[200px] h-auto object-cover rounded-[8px] border border-white/10 p-1 bg-white/[0.02]"
             />
           ) : null}
           <input
@@ -197,3 +197,4 @@ export function News() {
     </div>
   );
 }
+
