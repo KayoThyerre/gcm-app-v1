@@ -15,7 +15,10 @@ type NewsItem = {
 
 type NewsListResponse = {
   data: NewsItem[];
+  total: number;
 };
+
+const LIMIT = 5;
 
 export function News() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -29,6 +32,8 @@ export function News() {
   const [loadingList, setLoadingList] = useState(true);
   const [newsList, setNewsList] = useState<NewsItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -46,21 +51,25 @@ export function News() {
     };
   }, [imageFile]);
 
-  useEffect(() => {
-    async function loadNews() {
-      try {
-        setErrorMessage(null);
-        const response = await api.get<NewsListResponse>("/news?page=1&limit=50");
-        setNewsList(response.data.data);
-      } catch {
-        setErrorMessage("Nao foi possivel carregar as noticias.");
-      } finally {
-        setLoadingList(false);
-      }
+  async function loadNews(currentPage: number) {
+    try {
+      setLoadingList(true);
+      setErrorMessage(null);
+      const response = await api.get<NewsListResponse>(
+        `/news/admin?page=${currentPage}&limit=${LIMIT}`
+      );
+      setNewsList(response.data.data);
+      setTotal(response.data.total);
+    } catch {
+      setErrorMessage("Nao foi possivel carregar as noticias.");
+    } finally {
+      setLoadingList(false);
     }
+  }
 
-    void loadNews();
-  }, []);
+  useEffect(() => {
+    void loadNews(page);
+  }, [page]);
 
   const filteredNews = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
@@ -111,14 +120,14 @@ export function News() {
         imageUrl = uploadResponse.data.url;
       }
 
-      const response = await api.post<NewsItem>("/news", {
+      await api.post("/news", {
         title,
         content,
         imageUrl,
         published,
       });
 
-      setNewsList((currentNewsList) => [response.data, ...currentNewsList]);
+      await loadNews(page);
       setTitle("");
       setContent("");
       setImageFile(null);
@@ -141,9 +150,7 @@ export function News() {
       setErrorMessage(null);
       setSuccessMessage(null);
       await api.delete(`/news/${newsId}`);
-      setNewsList((currentNewsList) =>
-        currentNewsList.filter((news) => news.id !== newsId)
-      );
+      await loadNews(page);
       setSuccessMessage("Noticia excluida com sucesso.");
     } catch {
       setErrorMessage("Nao foi possivel excluir a noticia.");
@@ -317,6 +324,32 @@ export function News() {
             </table>
           </div>
         ) : null}
+
+        <div className="flex items-center justify-between gap-4">
+          <div className="text-sm text-slate-600 dark:text-slate-400">
+            <p>Pagina {page}</p>
+            <p>Total de {total} registros</p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={page === 1 || loadingList}
+              onClick={() => setPage((currentPage) => currentPage - 1)}
+              className="px-4 py-2 rounded-md border border-slate-300 text-slate-700 cursor-pointer transition hover:bg-slate-100 disabled:opacity-60 disabled:cursor-not-allowed dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              Anterior
+            </button>
+            <button
+              type="button"
+              disabled={page * LIMIT >= total || loadingList}
+              onClick={() => setPage((currentPage) => currentPage + 1)}
+              className="px-4 py-2 rounded-md border border-slate-300 text-slate-700 cursor-pointer transition hover:bg-slate-100 disabled:opacity-60 disabled:cursor-not-allowed dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              Proximo
+            </button>
+          </div>
+        </div>
       </section>
     </div>
   );
