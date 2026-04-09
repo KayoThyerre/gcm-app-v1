@@ -9,6 +9,8 @@ type UploadNewsResponse = {
 type NewsItem = {
   id: string;
   title: string;
+  content: string;
+  imageUrl: string | null;
   published: boolean;
   createdAt: string;
 };
@@ -26,8 +28,12 @@ export function News() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [published, setPublished] = useState(false);
+  const [mode, setMode] = useState<"create" | "edit">("create");
+  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingList, setLoadingList] = useState(true);
   const [newsList, setNewsList] = useState<NewsItem[]>([]);
@@ -39,7 +45,7 @@ export function News() {
 
   useEffect(() => {
     if (!imageFile) {
-      setImagePreview(null);
+      setImagePreview(imageUrl || null);
       return;
     }
 
@@ -49,7 +55,7 @@ export function News() {
     return () => {
       URL.revokeObjectURL(previewUrl);
     };
-  }, [imageFile]);
+  }, [imageFile, imageUrl]);
 
   async function loadNews(currentPage: number) {
     try {
@@ -83,9 +89,78 @@ export function News() {
     );
   }, [newsList, searchTerm]);
 
+  function resetForm() {
+    setTitle("");
+    setContent("");
+    setImageFile(null);
+    setImageUrl("");
+    setImagePreview(null);
+    setPublished(false);
+    setMode("create");
+    setSelectedNews(null);
+    setIsDirty(false);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  function handleStartEdit(news: NewsItem) {
+    if (mode === "edit" && isDirty && selectedNews?.id !== news.id) {
+      const shouldChange = window.confirm("Deseja sair sem salvar?");
+
+      if (!shouldChange) {
+        return;
+      }
+    }
+
+    setMode("edit");
+    setSelectedNews(news);
+    setTitle(news.title);
+    setContent(news.content);
+    setImageFile(null);
+    setImageUrl(news.imageUrl ?? "");
+    setImagePreview(news.imageUrl ?? null);
+    setPublished(news.published);
+    setIsDirty(false);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  function handleCancelEdit() {
+    if (isDirty) {
+      const shouldLeave = window.confirm("Deseja sair sem salvar?");
+
+      if (!shouldLeave) {
+        return;
+      }
+    }
+
+    resetForm();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+  }
+
   function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     setImageFile(event.target.files?.[0] ?? null);
+    setIsDirty(true);
     if (successMessage) setSuccessMessage(null);
+  }
+
+  function handleRemoveImage() {
+    setImageFile(null);
+    setImagePreview(null);
+    setImageUrl("");
+    setIsDirty(true);
+    if (successMessage) setSuccessMessage(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -101,7 +176,7 @@ export function News() {
     try {
       setLoading(true);
 
-      let imageUrl: string | undefined;
+      let nextImageUrl = imageUrl;
 
       if (imageFile) {
         const formData = new FormData();
@@ -117,29 +192,43 @@ export function News() {
           }
         );
 
-        imageUrl = uploadResponse.data.url;
+        nextImageUrl = uploadResponse.data.url;
+      }
+
+      if (mode === "edit" && selectedNews) {
+        const response = await api.put<NewsItem>(`/news/${selectedNews.id}`, {
+          title,
+          content,
+          imageUrl: nextImageUrl,
+          published,
+        });
+
+        setNewsList((currentNewsList) =>
+          currentNewsList.map((news) =>
+            news.id === selectedNews.id ? response.data : news
+          )
+        );
+        resetForm();
+        setSuccessMessage("Noticia atualizada com sucesso.");
+        return;
       }
 
       await api.post("/news", {
         title,
         content,
-        imageUrl,
+        imageUrl: nextImageUrl || undefined,
         published,
       });
 
       await loadNews(page);
-      setTitle("");
-      setContent("");
-      setImageFile(null);
-      setImagePreview(null);
-      setPublished(false);
+      resetForm();
       setSuccessMessage("Noticia criada com sucesso.");
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
     } catch {
-      setErrorMessage("Nao foi possivel criar a noticia.");
+      setErrorMessage(
+        mode === "edit"
+          ? "Nao foi possivel atualizar a noticia."
+          : "Nao foi possivel criar a noticia."
+      );
     } finally {
       setLoading(false);
     }
@@ -150,6 +239,11 @@ export function News() {
       setErrorMessage(null);
       setSuccessMessage(null);
       await api.delete(`/news/${newsId}`);
+
+      if (selectedNews?.id === newsId) {
+        resetForm();
+      }
+
       await loadNews(page);
       setSuccessMessage("Noticia excluida com sucesso.");
     } catch {
@@ -161,11 +255,19 @@ export function News() {
     <div className="max-w-5xl mx-auto p-8 space-y-10">
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-            Criar noticia
+          <h1
+            className={`text-2xl font-semibold ${
+              mode === "edit"
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-slate-900 dark:text-slate-100"
+            }`}
+          >
+            {mode === "edit" ? "Editando noticia" : "Criar noticia"}
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Cadastre uma nova noticia para a area publica.
+            {mode === "edit"
+              ? "Atualize os dados da noticia selecionada."
+              : "Cadastre uma nova noticia para a area publica."}
           </p>
         </div>
 
@@ -189,6 +291,7 @@ export function News() {
               value={title}
               onChange={(event) => {
                 setTitle(event.target.value);
+                setIsDirty(true);
                 if (successMessage) setSuccessMessage(null);
               }}
               className="border rounded-md px-3 py-2 w-full bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
@@ -207,6 +310,7 @@ export function News() {
               value={content}
               onChange={(event) => {
                 setContent(event.target.value);
+                setIsDirty(true);
                 if (successMessage) setSuccessMessage(null);
               }}
               rows={8}
@@ -228,6 +332,15 @@ export function News() {
                 className="mb-[10px] w-full max-w-[200px] max-h-[200px] h-auto object-cover rounded-[8px] border border-white/10 p-1 bg-white/[0.02]"
               />
             ) : null}
+            {imageUrl ? (
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className="mb-3 text-sm text-red-600 cursor-pointer transition hover:text-red-700"
+              >
+                Remover imagem
+              </button>
+            ) : null}
             <input
               ref={fileInputRef}
               id="image"
@@ -244,6 +357,7 @@ export function News() {
               checked={published}
               onChange={(event) => {
                 setPublished(event.target.checked);
+                setIsDirty(true);
                 if (successMessage) setSuccessMessage(null);
               }}
               className="h-4 w-4"
@@ -251,13 +365,31 @@ export function News() {
             Publicar noticia
           </label>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-blue-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {loading ? "Criando..." : "Criar noticia"}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-blue-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading
+                ? mode === "edit"
+                  ? "Salvando..."
+                  : "Criando..."
+                : mode === "edit"
+                  ? "Salvar alteracoes"
+                  : "Criar noticia"}
+            </button>
+
+            {mode === "edit" ? (
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="px-4 py-2 rounded-md border border-slate-300 text-slate-700 cursor-pointer transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Cancelar
+              </button>
+            ) : null}
+          </div>
         </form>
       </div>
 
@@ -288,8 +420,8 @@ export function News() {
         {!loadingList && filteredNews.length > 0 ? (
           <div className="w-full border rounded overflow-x-auto">
             <table className="w-full text-slate-900 dark:text-slate-100">
-              <thead className="bg-slate-100 dark:bg-slate-900">
-                <tr className="text-slate-700 dark:text-slate-200">
+              <thead className="bg-blue-600 text-white dark:bg-slate-900 dark:text-slate-200">
+                <tr>
                   <th className="text-left px-4 py-3">Titulo</th>
                   <th className="text-left px-4 py-3">Status</th>
                   <th className="text-left px-4 py-3">Data</th>
@@ -297,29 +429,41 @@ export function News() {
                 </tr>
               </thead>
               <tbody>
-                {filteredNews.map((news) => (
-                  <tr
-                    key={news.id}
-                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/60"
-                  >
-                    <td className="px-4 py-3">{news.title}</td>
-                    <td className="px-4 py-3">
-                      {news.published ? "Publicado" : "Rascunho"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {new Date(news.createdAt).toLocaleDateString("pt-BR")}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(news.id)}
-                        className="bg-red-500 text-white px-3 py-1 rounded cursor-pointer transition hover:bg-red-600"
-                      >
-                        Excluir
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredNews.map((news) => {
+                  const isSelected = mode === "edit" && selectedNews?.id === news.id;
+
+                  return (
+                    <tr
+                      key={news.id}
+                      onClick={() => handleStartEdit(news)}
+                      className={`cursor-pointer transition duration-200 ${
+                        isSelected
+                          ? "bg-blue-50 dark:bg-slate-700"
+                          : "hover:bg-blue-50 dark:hover:bg-slate-700"
+                      }`}
+                    >
+                      <td className="px-4 py-3">{news.title}</td>
+                      <td className="px-4 py-3">
+                        {news.published ? "Publicado" : "Rascunho"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {new Date(news.createdAt).toLocaleDateString("pt-BR")}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleDelete(news.id);
+                          }}
+                          className="bg-red-500 text-white px-3 py-1 rounded cursor-pointer transition hover:bg-red-600"
+                        >
+                          Excluir
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -336,7 +480,7 @@ export function News() {
               type="button"
               disabled={page === 1 || loadingList}
               onClick={() => setPage((currentPage) => currentPage - 1)}
-              className="px-4 py-2 rounded-md border border-slate-300 text-slate-700 cursor-pointer transition hover:bg-slate-100 disabled:opacity-60 disabled:cursor-not-allowed dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="px-4 py-2 rounded-md bg-blue-600 text-white cursor-pointer transition duration-200 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 dark:border dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 dark:disabled:hover:bg-slate-700"
             >
               Anterior
             </button>
@@ -344,7 +488,7 @@ export function News() {
               type="button"
               disabled={page * LIMIT >= total || loadingList}
               onClick={() => setPage((currentPage) => currentPage + 1)}
-              className="px-4 py-2 rounded-md border border-slate-300 text-slate-700 cursor-pointer transition hover:bg-slate-100 disabled:opacity-60 disabled:cursor-not-allowed dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="px-4 py-2 rounded-md bg-blue-600 text-white cursor-pointer transition duration-200 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 dark:border dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 dark:disabled:hover:bg-slate-700"
             >
               Proximo
             </button>
