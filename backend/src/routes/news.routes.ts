@@ -1,4 +1,4 @@
-import { Router } from "express";
+﻿import { Router } from "express";
 import { prisma } from "../prisma/client";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import { ensureRole } from "../middlewares/ensureRole";
@@ -69,6 +69,35 @@ newsRoutes.get("/", async (req, res) => {
     data: news,
   });
 });
+
+newsRoutes.get(
+  "/admin",
+  ensureAuthenticated,
+  ensureRole(["ADMIN"]),
+  async (req, res) => {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const safePage = page < 1 ? 1 : page;
+    const safeLimit = limit < 1 ? 10 : limit;
+    const skip = (safePage - 1) * safeLimit;
+
+    const [data, total] = await Promise.all([
+      prisma.news.findMany({
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: safeLimit,
+      }),
+      prisma.news.count(),
+    ]);
+
+    return res.json({
+      data,
+      total,
+      page: safePage,
+      limit: safeLimit,
+    });
+  }
+);
 
 newsRoutes.get("/:id", async (req, res) => {
   const { id } = req.params;
@@ -169,3 +198,4 @@ newsRoutes.delete(
     return res.status(204).send();
   }
 );
+
