@@ -1,58 +1,104 @@
+﻿import { useEffect, useMemo, useState } from 'react'
+import { api } from '../../services/api'
+
 type NewsItem = {
-  id: number
+  id: string
   title: string
-  description: string
-  date: string
-  image: string
+  content: string
+  imageUrl: string | null
+  createdAt: string
 }
 
-const newsItems: NewsItem[] = [
-  {
-    id: 1,
-    title: 'GCM reforça patrulhamento preventivo em áreas centrais',
-    description:
-      'A operação amplia a presença em pontos estratégicos e fortalece a sensação de segurança para comerciantes, moradores e visitantes.',
-    date: '26 Mar 2026',
-    image:
-      'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1400&q=80',
-  },
-  {
-    id: 2,
-    title: 'Programa comunitário aproxima agentes e lideranças locais',
-    description:
-      'Encontros periódicos passam a discutir demandas do território e ações preventivas em parceria com a população.',
-    date: '22 Mar 2026',
-    image:
-      'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1000&q=80',
-  },
-  {
-    id: 3,
-    title: 'Ação integrada intensifica proteção no entorno escolar',
-    description:
-      'A iniciativa reúne monitoramento e orientação para garantir mais tranquilidade nos horários de entrada e saída.',
-    date: '19 Mar 2026',
-    image:
-      'https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?auto=format&fit=crop&w=1000&q=80',
-  },
-  {
-    id: 4,
-    title: 'Nova frente educativa leva cidadania a espaços públicos',
-    description:
-      'Atividades informativas orientam a comunidade sobre prevenção, convivência e uso seguro dos equipamentos urbanos.',
-    date: '15 Mar 2026',
-    image:
-      'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1000&q=80',
-  },
-]
+type NewsListResponse = {
+  data: NewsItem[]
+}
 
-const [featuredNews, ...otherNews] = newsItems
+const DEFAULT_IMAGE =
+  'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1400&q=80'
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+function getSummary(content: string, maxLength: number) {
+  if (content.length <= maxLength) {
+    return content
+  }
+
+  return `${content.slice(0, maxLength).trim()}...`
+}
 
 function NewsSection() {
+  const [newsList, setNewsList] = useState<NewsItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [visibleCount, setVisibleCount] = useState(5)
+
+  useEffect(() => {
+    async function loadNews() {
+      try {
+        const response = await api.get<NewsListResponse>('/news')
+        setNewsList(response.data.data)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    void loadNews()
+  }, [])
+
+  const featured = newsList[0]
+  const rest = newsList.slice(1)
+
+  const filteredNews = useMemo(() => {
+    const normalizedSearchTerm = searchTerm.trim().toLowerCase()
+
+    if (!normalizedSearchTerm) {
+      return rest
+    }
+
+    return rest.filter((news) =>
+      news.title.toLowerCase().includes(normalizedSearchTerm)
+    )
+  }, [rest, searchTerm])
+
+  const visibleNews = filteredNews.slice(0, visibleCount)
+
+  if (loading) {
+    return (
+      <section className="bg-white py-16">
+        <div>
+          <h2 className="animate-fade-up text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+            Noticias
+          </h2>
+          <p className="mt-8 text-slate-600">Carregando...</p>
+        </div>
+      </section>
+    )
+  }
+
+  if (!featured) {
+    return (
+      <section className="bg-white py-16">
+        <div>
+          <h2 className="animate-fade-up text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+            Noticias
+          </h2>
+          <p className="mt-8 text-slate-600">Nenhuma noticia disponivel</p>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="bg-white py-16">
       <div>
         <h2 className="animate-fade-up text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-          Notícias
+          Noticias
         </h2>
 
         <article
@@ -60,8 +106,8 @@ function NewsSection() {
           style={{ animationDelay: '120ms' }}
         >
           <img
-            src={featuredNews.image}
-            alt={featuredNews.title}
+            src={featured.imageUrl || DEFAULT_IMAGE}
+            alt={featured.title}
             className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105 group-hover:brightness-90"
           />
           <div className="absolute inset-0 bg-black/50" />
@@ -69,42 +115,66 @@ function NewsSection() {
           <div className="relative flex h-full items-end p-6">
             <div className="max-w-3xl text-white">
               <p className="text-sm font-medium text-slate-200">
-                {featuredNews.date}
+                {formatDate(featured.createdAt)}
               </p>
               <h3 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
-                {featuredNews.title}
+                {featured.title}
               </h3>
               <p className="mt-3 text-sm leading-7 text-slate-100 sm:text-base">
-                {featuredNews.description}
+                {getSummary(featured.content, 220)}
               </p>
             </div>
           </div>
         </article>
 
         <div className="mt-10 space-y-6">
-          {otherNews.map((item) => (
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Buscar noticia por titulo..."
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-300"
+          />
+
+          {visibleNews.length === 0 ? (
+            <p className="text-slate-600">Nenhuma noticia disponivel</p>
+          ) : null}
+
+          {visibleNews.map((item, index) => (
             <article
               key={item.id}
               className="animate-fade-up flex flex-col gap-4 rounded-xl border border-slate-200 bg-slate-50 p-5 sm:flex-row"
-              style={{ animationDelay: `${item.id * 120}ms` }}
+              style={{ animationDelay: `${(index + 1) * 120}ms` }}
             >
               <img
-                src={item.image}
+                src={item.imageUrl || DEFAULT_IMAGE}
                 alt={item.title}
                 className="h-28 w-full rounded-lg object-cover sm:w-40"
               />
 
               <div className="flex-1">
-                <p className="text-sm font-medium text-slate-500">{item.date}</p>
+                <p className="text-sm font-medium text-slate-500">
+                  {formatDate(item.createdAt)}
+                </p>
                 <h3 className="mt-2 text-xl font-semibold text-slate-900">
                   {item.title}
                 </h3>
                 <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {item.description}
+                  {getSummary(item.content, 160)}
                 </p>
               </div>
             </article>
           ))}
+
+          {visibleCount < filteredNews.length ? (
+            <button
+              type="button"
+              onClick={() => setVisibleCount((currentCount) => currentCount + 5)}
+              className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-100"
+            >
+              Ver mais
+            </button>
+          ) : null}
         </div>
       </div>
     </section>
