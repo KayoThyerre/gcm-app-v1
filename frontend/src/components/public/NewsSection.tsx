@@ -13,8 +13,11 @@ type NewsListResponse = {
   data: NewsItem[]
 }
 
-const DEFAULT_IMAGE =
-  'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1400&q=80'
+function getDefaultImage() {
+  const images = ['/operacao-comunitaria.png', '/operacao-escolar.png']
+  const index = Math.floor(Math.random() * images.length)
+  return images[index]
+}
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString('pt-BR', {
@@ -94,6 +97,8 @@ function NewsSection() {
     )
   }
 
+  const featuredImageSrc = featured.imageUrl || getDefaultImage()
+
   return (
     <section className="bg-white py-16">
       <div>
@@ -106,7 +111,7 @@ function NewsSection() {
           style={{ animationDelay: '120ms' }}
         >
           <img
-            src={featured.imageUrl || DEFAULT_IMAGE}
+            src={featuredImageSrc}
             alt={featured.title}
             className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105 group-hover:brightness-90"
           />
@@ -140,31 +145,35 @@ function NewsSection() {
             <p className="text-slate-600">Nenhuma noticia disponivel</p>
           ) : null}
 
-          {visibleNews.map((item, index) => (
-            <article
-              key={item.id}
-              className="animate-fade-up flex flex-col gap-4 rounded-xl border border-slate-200 bg-slate-50 p-5 sm:flex-row"
-              style={{ animationDelay: `${(index + 1) * 120}ms` }}
-            >
-              <img
-                src={item.imageUrl || DEFAULT_IMAGE}
-                alt={item.title}
-                className="h-28 w-full rounded-lg object-cover sm:w-40"
-              />
+          {visibleNews.map((item, index) => {
+            const imageSrc = item.imageUrl || getDefaultImage()
 
-              <div className="flex-1">
-                <p className="text-sm font-medium text-slate-500">
-                  {formatDate(item.createdAt)}
-                </p>
-                <h3 className="mt-2 text-xl font-semibold text-slate-900">
-                  {item.title}
-                </h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {getSummary(item.content, 160)}
-                </p>
-              </div>
-            </article>
-          ))}
+            return (
+              <article
+                key={item.id}
+                className="animate-fade-up flex flex-col gap-4 rounded-xl border border-slate-200 bg-slate-50 p-5 sm:flex-row"
+                style={{ animationDelay: `${(index + 1) * 120}ms` }}
+              >
+                <img
+                  src={imageSrc}
+                  alt={item.title}
+                  className="h-28 w-full rounded-lg object-cover sm:w-40"
+                />
+
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-500">
+                    {formatDate(item.createdAt)}
+                  </p>
+                  <h3 className="mt-2 text-xl font-semibold text-slate-900">
+                    {item.title}
+                  </h3>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                    {getSummary(item.content, 160)}
+                  </p>
+                </div>
+              </article>
+            )
+          })}
 
           {visibleCount < filteredNews.length ? (
             <button
