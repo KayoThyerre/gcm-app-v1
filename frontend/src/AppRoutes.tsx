@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+﻿import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Login } from "../src/pages/Login";
 import { Register } from "./pages/Register";
 import { Home } from "../src/pages/Home";
@@ -15,6 +15,7 @@ import { PrivateRoute } from "../src/routes/PrivateRoute";
 import { PrivateLayout } from "./layouts/PrivateLayout";
 import PublicHome from "./pages/public/Home";
 import PublicNews from "./pages/public/News";
+import NewsDetail from "./pages/public/NewsDetail";
 
 type AppRoute = {
   path: string;
@@ -31,6 +32,10 @@ const routes: AppRoute[] = [
   {
     path: "/noticias",
     element: <PublicNews />,
+  },
+  {
+    path: "/noticias/:id",
+    element: <NewsDetail />,
   },
   {
     path: "/login",
@@ -56,11 +61,11 @@ const routes: AppRoute[] = [
         path: "home",
         element: <Home />,
         children: [
-          {path: "",element: <Dashboard />,},
-          {path: "users", element: <Users />,},
-          {path: "news", element: <News />,},
-          {path: "reports", element: <Reports />,},
-          {path: "settings", element: <Settings />,},
+          {path: "",element: <Dashboard />},
+          {path: "users", element: <Users />},
+          {path: "news", element: <News />},
+          {path: "reports", element: <Reports />},
+          {path: "settings", element: <Settings />},
         ],
       },
       {

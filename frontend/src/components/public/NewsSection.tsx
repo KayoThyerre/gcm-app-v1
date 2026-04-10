@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../../services/api'
 
 type NewsItem = {
@@ -13,7 +14,7 @@ type NewsListResponse = {
   data: NewsItem[]
 }
 
-function getDefaultImage() {
+export function getDefaultImage() {
   const images = ['/operacao-comunitaria.png', '/operacao-escolar.png']
   const index = Math.floor(Math.random() * images.length)
   return images[index]
@@ -35,7 +36,18 @@ function getSummary(content: string, maxLength: number) {
   return `${content.slice(0, maxLength).trim()}...`
 }
 
+function getPreview(text: string) {
+  if (!text) return ''
+
+  const maxLength = 140
+
+  if (text.length <= maxLength) return text
+
+  return text.slice(0, maxLength) + '...'
+}
+
 function NewsSection() {
+  const navigate = useNavigate()
   const [newsList, setNewsList] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -151,7 +163,8 @@ function NewsSection() {
             return (
               <article
                 key={item.id}
-                className="animate-fade-up flex flex-col gap-4 rounded-xl border border-slate-200 bg-slate-50 p-5 sm:flex-row"
+                onClick={() => navigate(`/noticias/${item.id}`)}
+                className="animate-fade-up flex cursor-pointer flex-col gap-4 rounded-xl border border-slate-200 bg-slate-50 p-5 transition hover:bg-slate-100 sm:flex-row"
                 style={{ animationDelay: `${(index + 1) * 120}ms` }}
               >
                 <img
@@ -168,7 +181,7 @@ function NewsSection() {
                     {item.title}
                   </h3>
                   <p className="mt-3 text-sm leading-7 text-slate-600">
-                    {getSummary(item.content, 160)}
+                    {getPreview(item.content)}
                   </p>
                 </div>
               </article>
