@@ -119,7 +119,8 @@ function NewsSection() {
         </h2>
 
         <article
-          className="group relative mt-8 h-[320px] overflow-hidden rounded-xl animate-fade-up"
+          onClick={() => navigate(`/noticias/${featured.id}`)}
+          className="group relative mt-8 h-[320px] cursor-pointer overflow-hidden rounded-xl animate-fade-up transition duration-150 hover:opacity-95"
           style={{ animationDelay: '120ms' }}
         >
           <img
@@ -127,9 +128,9 @@ function NewsSection() {
             alt={featured.title}
             className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105 group-hover:brightness-90"
           />
-          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 bg-black/50 pointer-events-none" />
 
-          <div className="relative flex h-full items-end p-6">
+          <div className="relative z-10 flex h-full items-end p-6">
             <div className="max-w-3xl text-white">
               <p className="text-sm font-medium text-slate-200">
                 {formatDate(featured.createdAt)}
@@ -204,3 +205,5 @@ function NewsSection() {
 }
 
 export default NewsSection
+
+

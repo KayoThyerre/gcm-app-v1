@@ -57,8 +57,8 @@ function NewsDetail() {
         </div>
 
         <MainLayout>
-          <section className="bg-white py-16">
-            <div className="space-y-8">
+          <section className="bg-blue-50 py-16 dark:bg-slate-900">
+            <div className="space-y-8 rounded-xl bg-white p-8 dark:bg-slate-800">
               <button
                 type="button"
                 onClick={() => navigate(-1)}
@@ -105,3 +105,4 @@ function NewsDetail() {
 }
 
 export default NewsDetail
+
