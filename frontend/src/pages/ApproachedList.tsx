@@ -17,6 +17,8 @@ type Approach = {
   updatedAt: string;
 };
 
+const itemsPerPage = 5;
+
 function formatDate(date: string | null) {
   if (!date) {
     return "-";
@@ -38,6 +40,7 @@ export function ApproachedList() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedApproach, setSelectedApproach] = useState<Approach | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     async function loadApproaches() {
@@ -55,6 +58,10 @@ export function ApproachedList() {
 
     void loadApproaches();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const filteredApproaches = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
@@ -76,8 +83,40 @@ export function ApproachedList() {
     });
   }, [approaches, searchTerm]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredApproaches.length / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+
+  const paginatedApproaches = useMemo(() => {
+    return filteredApproaches.slice(startIndex, endIndex);
+  }, [endIndex, filteredApproaches, startIndex]);
+
+  useEffect(() => {
+    if (currentPage !== safeCurrentPage) {
+      setCurrentPage(safeCurrentPage);
+    }
+  }, [currentPage, safeCurrentPage]);
+
+  useEffect(() => {
+    if (paginatedApproaches.length === 0) {
+      if (selectedApproach !== null) {
+        setSelectedApproach(null);
+      }
+      return;
+    }
+
+    const hasSelectedInPage = paginatedApproaches.some(
+      (approach) => approach.id === selectedApproach?.id
+    );
+
+    if (!hasSelectedInPage) {
+      setSelectedApproach(paginatedApproaches[0]);
+    }
+  }, [paginatedApproaches, selectedApproach]);
+
   const visibleSelectedApproach =
-    filteredApproaches.find((approach) => approach.id === selectedApproach?.id) ?? null;
+    paginatedApproaches.find((approach) => approach.id === selectedApproach?.id) ?? null;
 
   return (
     <div className="max-w-6xl mx-auto p-8 space-y-8">
@@ -123,7 +162,7 @@ export function ApproachedList() {
             </h2>
 
             <div className="space-y-3">
-              {filteredApproaches.map((approach) => {
+              {paginatedApproaches.map((approach) => {
                 const isSelected = visibleSelectedApproach?.id === approach.id;
 
                 return (
@@ -158,6 +197,32 @@ export function ApproachedList() {
                   </button>
                 );
               })}
+            </div>
+
+            <div className="flex items-center justify-between gap-4 pt-2">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
+                <p>Pagina {safeCurrentPage}</p>
+                <p>Total de {filteredApproaches.length} registros</p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={safeCurrentPage === 1}
+                  onClick={() => setCurrentPage((page) => page - 1)}
+                  className="px-4 py-2 rounded-md border border-slate-300 bg-white text-slate-700 cursor-pointer transition hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  disabled={safeCurrentPage >= totalPages}
+                  onClick={() => setCurrentPage((page) => page + 1)}
+                  className="px-4 py-2 rounded-md border border-slate-300 bg-white text-slate-700 cursor-pointer transition hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                >
+                  Proximo
+                </button>
+              </div>
             </div>
           </section>
 
