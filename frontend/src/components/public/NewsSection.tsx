@@ -36,7 +36,7 @@ function getSummary(content: string, maxLength: number) {
   return `${content.slice(0, maxLength).trim()}...`
 }
 
-function getPreview(text: string) {
+export function getPreview(text: string) {
   if (!text) return ''
 
   const maxLength = 140
@@ -88,7 +88,7 @@ function NewsSection() {
       <section className="bg-white py-16">
         <div>
           <h2 className="animate-fade-up text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-            Noticias
+            Ultimas noticias
           </h2>
           <p className="mt-8 text-slate-600">Carregando...</p>
         </div>
@@ -101,7 +101,7 @@ function NewsSection() {
       <section className="bg-white py-16">
         <div>
           <h2 className="animate-fade-up text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-            Noticias
+            Ultimas noticias
           </h2>
           <p className="mt-8 text-slate-600">Nenhuma noticia disponivel</p>
         </div>
@@ -115,7 +115,7 @@ function NewsSection() {
     <section className="bg-white py-16">
       <div>
         <h2 className="animate-fade-up text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-          Noticias
+          Ultimas noticias
         </h2>
 
         <article

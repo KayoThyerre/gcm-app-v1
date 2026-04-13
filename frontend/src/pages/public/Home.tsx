@@ -9,12 +9,14 @@ import { PublicLayout } from '../../layouts/PublicLayout'
 function Home() {
   return (
     <PublicLayout>
-      <Navbar />
-      <Hero />
-      <CarouselSection />
-      <AboutSection />
-      <StatsSection />
-      <ContactSection />
+      <div className="bg-white text-slate-900 [color-scheme:light]">
+        <Navbar />
+        <Hero />
+        <CarouselSection />
+        <AboutSection />
+        <StatsSection />
+        <ContactSection />
+      </div>
     </PublicLayout>
   )
 }

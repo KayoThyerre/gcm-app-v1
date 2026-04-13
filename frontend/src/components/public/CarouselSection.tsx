@@ -1,94 +1,102 @@
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import MainLayout from '../../layouts/public/MainLayout'
+import { api } from '../../services/api'
+import { getDefaultImage, getPreview } from './NewsSection'
 
-type CarouselItemType = 'ocorrencia' | 'noticia'
-
-type CarouselItem = {
-  id: number
+type NewsItem = {
+  id: string
   title: string
-  description: string
-  image: string
-  type: CarouselItemType
+  content: string
+  imageUrl: string | null
+  createdAt: string
 }
 
-const items: CarouselItem[] = [
-  {
-    id: 1,
-    title: 'Atendimento preventivo em area escolar',
-    description: 'Acoes de monitoramento reforcam a seguranca de estudantes e familias.',
-    image:
-      'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80',
-    type: 'ocorrencia',
-  },
-  {
-    id: 2,
-    title: 'Nova base comunitaria amplia cobertura',
-    description: 'Estrutura fortalece o atendimento em bairros com grande circulacao.',
-    image:
-      'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1200&q=80',
-    type: 'noticia',
-  },
-  {
-    id: 3,
-    title: 'Patrulhamento intensificado em areas publicas',
-    description: 'Presenca estrategica contribui para ordem e acolhimento da populacao.',
-    image:
-      'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
-    type: 'ocorrencia',
-  },
-  {
-    id: 4,
-    title: 'Projeto educativo aproxima GCM da comunidade',
-    description: 'Encontros promovem orientacao, cidadania e dialogo com moradores.',
-    image:
-      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
-    type: 'noticia',
-  },
-]
-
-const itemTypeLabel: Record<CarouselItemType, string> = {
-  ocorrencia: 'Ocorrência',
-  noticia: 'Notícia',
+type NewsListResponse = {
+  data: NewsItem[]
 }
 
 function CarouselSection() {
+  const navigate = useNavigate()
+  const [newsList, setNewsList] = useState<NewsItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadNews() {
+      try {
+        const response = await api.get<NewsListResponse>('/news')
+        setNewsList(response.data.data)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    void loadNews()
+  }, [])
+
+  const visibleNews = useMemo(() => {
+    return [...newsList]
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .slice(0, 5)
+  }, [newsList])
+
   return (
     <section className="bg-slate-950 py-16 text-white">
       <MainLayout>
         <div>
           <h2 className="animate-fade-up text-3xl font-semibold tracking-tight sm:text-4xl">
-            Ocorrências e Notícias
+            Ultimas noticias
           </h2>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+            Acompanhe as acoes, operacoes e atualizacoes mais recentes da GCM.
+          </p>
 
-          <div className="mt-8 overflow-x-auto pb-2">
-            <div className="flex gap-6">
-              {items.map((item) => (
-                <article
-                  key={item.id}
-                  className="group relative h-[220px] w-[300px] shrink-0 overflow-hidden rounded-xl animate-fade-up"
-                  style={{ animationDelay: `${item.id * 120}ms` }}
-                >
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105 group-hover:brightness-90"
-                  />
-                  <div className="absolute inset-0 bg-black/50" />
+          {loading ? <p className="mt-8 text-slate-300">Carregando...</p> : null}
 
-                  <div className="relative flex h-full items-end p-4">
-                    <div>
-                      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-200">
-                        {itemTypeLabel[item.type]}
-                      </span>
-                      <h3 className="mt-2 text-xl font-semibold">{item.title}</h3>
-                      <p className="mt-2 text-sm leading-6 text-slate-200">
-                        {item.description}
-                      </p>
-                    </div>
-                  </div>
-                </article>
-              ))}
+          {!loading && visibleNews.length === 0 ? (
+            <p className="mt-8 text-slate-300">Nenhuma noticia disponivel no momento.</p>
+          ) : null}
+
+          {!loading && visibleNews.length > 0 ? (
+            <div className="mt-8 overflow-x-auto pb-2">
+              <div className="flex gap-6">
+                {visibleNews.map((item, index) => {
+                  const imageSrc = item.imageUrl || getDefaultImage()
+
+                  return (
+                    <article
+                      key={item.id}
+                      onClick={() => navigate(`/noticias/${item.id}`)}
+                      className="group relative h-[220px] w-[300px] shrink-0 cursor-pointer overflow-hidden rounded-xl animate-fade-up"
+                      style={{ animationDelay: `${(index + 1) * 120}ms` }}
+                    >
+                      <img
+                        src={imageSrc}
+                        alt={item.title}
+                        className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105 group-hover:brightness-90"
+                      />
+                      <div className="absolute inset-0 bg-black/50 pointer-events-none" />
+
+                      <div className="relative flex h-full items-end p-4">
+                        <div>
+                          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-200">
+                            Noticia
+                          </span>
+                          <h3 className="mt-2 text-xl font-semibold">{item.title}</h3>
+                          <p className="mt-2 text-sm leading-6 text-slate-200">
+                            {getPreview(item.content)}
+                          </p>
+                        </div>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
       </MainLayout>
     </section>
