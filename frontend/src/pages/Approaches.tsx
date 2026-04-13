@@ -1,7 +1,11 @@
-﻿import { useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
+
+type UploadApproachResponse = {
+  url: string;
+};
 
 type Approach = {
   id: string;
@@ -28,6 +32,7 @@ function formatBirthDate(date: string | null) {
 }
 
 export function Approaches() {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { user } = useAuth();
 
   const canEdit =
@@ -47,6 +52,9 @@ export function Approaches() {
   const [motherName, setMotherName] = useState("");
   const [notes, setNotes] = useState("");
   const [isConvicted, setIsConvicted] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState("");
 
   const [mode, setMode] = useState<"create" | "edit">("create");
   const [selectedApproach, setSelectedApproach] = useState<Approach | null>(null);
@@ -55,6 +63,20 @@ export function Approaches() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreview(imageUrl || null);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(imageFile);
+    setImagePreview(previewUrl);
+
+    return () => {
+      URL.revokeObjectURL(previewUrl);
+    };
+  }, [imageFile, imageUrl]);
 
   useEffect(() => {
     async function loadApproaches() {
@@ -98,9 +120,16 @@ export function Approaches() {
     setMotherName("");
     setNotes("");
     setIsConvicted(false);
+    setImageFile(null);
+    setImagePreview(null);
+    setImageUrl("");
     setMode("create");
     setSelectedApproach(null);
     setIsDirty(false);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   function handleStartEdit(approach: Approach) {
@@ -125,9 +154,16 @@ export function Approaches() {
     setMotherName(approach.motherName ?? "");
     setNotes(approach.notes ?? "");
     setIsConvicted(approach.isConvicted);
+    setImageFile(null);
+    setImagePreview(approach.photoUrl ?? null);
+    setImageUrl(approach.photoUrl ?? "");
     setIsDirty(false);
     setErrorMessage(null);
     setSuccessMessage(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   function handleCancel() {
@@ -144,6 +180,24 @@ export function Approaches() {
     setSuccessMessage(null);
   }
 
+  function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+    setImageFile(event.target.files?.[0] ?? null);
+    setIsDirty(true);
+    if (successMessage) setSuccessMessage(null);
+  }
+
+  function handleRemoveImage() {
+    setImageFile(null);
+    setImagePreview(null);
+    setImageUrl("");
+    setIsDirty(true);
+    if (successMessage) setSuccessMessage(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMessage(null);
@@ -154,22 +208,42 @@ export function Approaches() {
       return;
     }
 
-    const payload = {
-      name,
-      cpf,
-      rg,
-      birthDate,
-      motherName,
-      notes,
-      isConvicted,
-    };
-
     try {
       setSubmitting(true);
 
+      let nextImageUrl = imageUrl;
+
+      if (imageFile) {
+        const formData = new FormData();
+        formData.append("image", imageFile);
+
+        const uploadResponse = await api.post<UploadApproachResponse>(
+          "/upload/approach",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        nextImageUrl = uploadResponse.data.url;
+      }
+
+      const payload = {
+        name,
+        cpf,
+        rg,
+        birthDate,
+        motherName,
+        notes,
+        isConvicted,
+        photoUrl: nextImageUrl,
+      };
+
       if (mode === "edit" && selectedApproach) {
         const response = await api.put<Approach>(
-          `/approaches/${selectedApproach.id}`,
+          "/approaches/" + selectedApproach.id,
           payload
         );
 
@@ -203,7 +277,7 @@ export function Approaches() {
     try {
       setErrorMessage(null);
       setSuccessMessage(null);
-      await api.delete(`/approaches/${approachId}`);
+      await api.delete("/approaches/" + approachId);
       setApproaches((currentApproaches) =>
         currentApproaches.filter((approach) => approach.id !== approachId)
       );
@@ -223,11 +297,12 @@ export function Approaches() {
       <div className="space-y-6">
         <div>
           <h1
-            className={`text-2xl font-semibold ${
-              mode === "edit"
+            className={
+              "text-2xl font-semibold " +
+              (mode === "edit"
                 ? "text-blue-600 dark:text-blue-400"
-                : "text-slate-900 dark:text-slate-100"
-            }`}
+                : "text-slate-900 dark:text-slate-100")
+            }
           >
             {mode === "edit" ? "Editando abordagem" : "Cadastrar abordagem"}
           </h1>
@@ -366,6 +441,39 @@ export function Approaches() {
             />
           </div>
 
+          <div className="space-y-1">
+            <label
+              htmlFor="image"
+              className="text-sm font-medium text-slate-900 dark:text-slate-100"
+            >
+              Imagem
+            </label>
+            {imagePreview ? (
+              <img
+                src={imagePreview}
+                alt="Preview da imagem da abordagem"
+                className="mb-[10px] w-full max-w-[200px] max-h-[200px] h-auto object-cover rounded-[8px] border border-white/10 p-1 bg-white/[0.02]"
+              />
+            ) : null}
+            {imageUrl ? (
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className="mb-3 text-sm text-red-600 cursor-pointer transition hover:text-red-700"
+              >
+                Remover imagem
+              </button>
+            ) : null}
+            <input
+              ref={fileInputRef}
+              id="image"
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp"
+              onChange={handleImageChange}
+              className="border rounded-md px-3 py-2 w-full bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+            />
+          </div>
+
           <label className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-slate-100">
             <input
               type="checkbox"
@@ -451,15 +559,13 @@ export function Approaches() {
                     <tr
                       key={approach.id}
                       onClick={() => handleStartEdit(approach)}
-                      className={`transition duration-200 ${
-                        canEdit ? "cursor-pointer" : "cursor-default"
-                      } ${
-                        isSelected
+                      className={"transition duration-200 " +
+                        (canEdit ? "cursor-pointer " : "cursor-default ") +
+                        (isSelected
                           ? "bg-blue-50 dark:bg-slate-700"
                           : canEdit
                             ? "hover:bg-blue-50 dark:hover:bg-slate-700"
-                            : ""
-                      }`}
+                            : "")}
                     >
                       <td className="px-4 py-3">{approach.name}</td>
                       <td className="px-4 py-3">{approach.cpf || "-"}</td>
