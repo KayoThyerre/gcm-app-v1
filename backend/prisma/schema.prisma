@@ -55,6 +55,7 @@ model Approach {
 enum Role {
   ADMIN
   USER
+  DEV
 }
 
 enum Status {
@@ -62,3 +63,4 @@ enum Status {
   PENDING
   INACTIVE
 }
+
