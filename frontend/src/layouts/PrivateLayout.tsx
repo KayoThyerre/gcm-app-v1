@@ -1,24 +1,46 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../hooks/useTheme";
+import type { UserRole } from "../types/User";
 
 type SidebarItem = {
   label: string;
   path: string;
   icon: string;
-  roles?: Array<"ADMIN" | "USER">;
+  roles?: UserRole[];
 };
 
 const MAIN_SIDEBAR_ITEMS: SidebarItem[] = [
-  { label: "Dashboard", path: "/home", icon: "📊", roles: ["ADMIN", "USER"] },
-  { label: "Users", path: "/dashboard/admin/users", icon: "👤", roles: ["ADMIN"] },
+  {
+    label: "Dashboard",
+    path: "/home",
+    icon: "📊",
+    roles: ["ADMIN", "USER", "SUPERVISOR", "DEV"],
+  },
+  { label: "Users", path: "/dashboard/admin/users", icon: "📊", roles: ["ADMIN"] },
   { label: "News", path: "/home/news", icon: "N", roles: ["ADMIN"] },
+  {
+    label: "Abordagens",
+    path: "/home/approaches",
+    icon: "👤",
+    roles: ["ADMIN", "USER", "SUPERVISOR", "DEV"],
+  },
 ];
 
 const SETTINGS_SIDEBAR_ITEMS: SidebarItem[] = [
-  { label: "Profile", path: "/settings/profile", icon: "🪪", roles: ["ADMIN", "USER"] },
-  { label: "Security", path: "/settings/security", icon: "🔒", roles: ["ADMIN", "USER"] },
+  {
+    label: "Profile",
+    path: "/settings/profile",
+    icon: "🪪",
+    roles: ["ADMIN", "USER", "SUPERVISOR", "DEV"],
+  },
+  {
+    label: "Security",
+    path: "/settings/security",
+    icon: "🔒",
+    roles: ["ADMIN", "USER", "SUPERVISOR", "DEV"],
+  },
 ];
 
 type HeaderAction = {
@@ -75,7 +97,7 @@ export function PrivateLayout() {
 
   function renderSidebarItems(items: SidebarItem[], itemPaddingClass = "") {
     return items
-      .filter((item) => item.roles?.includes(user?.role as "ADMIN" | "USER"))
+      .filter((item) => item.roles?.includes((user?.role as UserRole) ?? "USER"))
       .map((item) => {
         const active = isActive(item.path);
 

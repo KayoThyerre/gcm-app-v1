@@ -10,6 +10,7 @@ import { AdminUsers } from "./pages/AdminUsers";
 import { Profile } from "./pages/Profile";
 import { ProfileSecurity } from "./pages/ProfileSecurity";
 import { News } from "./pages/News";
+import { Approaches } from "./pages/Approaches";
 import { CheckEmail } from "./pages/CheckEmail";
 import { PrivateRoute } from "../src/routes/PrivateRoute";
 import { PrivateLayout } from "./layouts/PrivateLayout";
@@ -61,11 +62,12 @@ const routes: AppRoute[] = [
         path: "home",
         element: <Home />,
         children: [
-          {path: "",element: <Dashboard />},
-          {path: "users", element: <Users />},
-          {path: "news", element: <News />},
-          {path: "reports", element: <Reports />},
-          {path: "settings", element: <Settings />},
+          { path: "", element: <Dashboard /> },
+          { path: "users", element: <Users /> },
+          { path: "news", element: <News /> },
+          { path: "approaches", element: <Approaches /> },
+          { path: "reports", element: <Reports /> },
+          { path: "settings", element: <Settings /> },
         ],
       },
       {

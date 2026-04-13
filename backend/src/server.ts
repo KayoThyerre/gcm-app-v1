@@ -1,4 +1,4 @@
-import "dotenv/config";
+﻿import "dotenv/config";
 import path from "path";
 import express from "express";
 import cors from "cors";
@@ -9,6 +9,7 @@ import { profileRoutes } from "./routes/profile.routes";
 import { uploadRoutes } from "./routes/upload.routes";
 import { uploadNewsRoutes } from "./routes/uploadNews.routes";
 import { newsRoutes } from "./routes/news.routes";
+import approachRoutes from "./routes/approach.routes";
 
 const app = express();
 const uploadsPath = path.resolve(process.cwd(), "uploads");
@@ -36,6 +37,7 @@ app.use("/profile", profileRoutes);
 app.use("/upload", uploadRoutes);
 app.use("/upload/news", uploadNewsRoutes);
 app.use("/news", newsRoutes);
+app.use("/approaches", approachRoutes);
 app.use(errorHandler);
 
 app.listen(PORT, () => {

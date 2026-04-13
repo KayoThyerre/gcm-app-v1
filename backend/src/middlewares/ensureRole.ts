@@ -1,9 +1,10 @@
-import { Request, Response, NextFunction } from "express";
+﻿import { Request, Response, NextFunction } from "express";
+import type { Role } from "@prisma/client";
 
-export function ensureRole(allowedRoles: Array<"ADMIN" | "USER">) {
+export function ensureRole(allowedRoles: Role[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
-      return res.status(401).json({ error: "Não autenticado" });
+      return res.status(401).json({ error: "NÃ£o autenticado" });
     }
 
     if (!allowedRoles.includes(req.user.role)) {

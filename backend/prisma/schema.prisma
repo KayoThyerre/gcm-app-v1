@@ -55,6 +55,7 @@ model Approach {
 enum Role {
   ADMIN
   USER
+  SUPERVISOR
   DEV
 }
 
