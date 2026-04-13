@@ -36,6 +36,22 @@ model News {
   updatedAt DateTime @updatedAt
 }
 
+model Approach {
+  id          String   @id @default(uuid())
+  name        String
+  cpf         String?
+  rg          String?
+  birthDate   DateTime?
+  motherName  String?
+  notes       String?
+  isConvicted Boolean  @default(false)
+  photoUrl    String?
+  createdById String
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 enum Role {
   ADMIN
   USER
