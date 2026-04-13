@@ -11,6 +11,7 @@ import { Profile } from "./pages/Profile";
 import { ProfileSecurity } from "./pages/ProfileSecurity";
 import { News } from "./pages/News";
 import { Approaches } from "./pages/Approaches";
+import { ApproachedList } from "./pages/ApproachedList";
 import { CheckEmail } from "./pages/CheckEmail";
 import { PrivateRoute } from "../src/routes/PrivateRoute";
 import { PrivateLayout } from "./layouts/PrivateLayout";
@@ -66,6 +67,7 @@ const routes: AppRoute[] = [
           { path: "users", element: <Users /> },
           { path: "news", element: <News /> },
           { path: "approaches", element: <Approaches /> },
+          { path: "abordados", element: <ApproachedList /> },
           { path: "reports", element: <Reports /> },
           { path: "settings", element: <Settings /> },
         ],

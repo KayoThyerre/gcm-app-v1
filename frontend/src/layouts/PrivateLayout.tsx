@@ -26,6 +26,12 @@ const MAIN_SIDEBAR_ITEMS: SidebarItem[] = [
     icon: "👤",
     roles: ["ADMIN", "USER", "SUPERVISOR", "DEV"],
   },
+  {
+    label: "Abordados",
+    path: "/home/abordados",
+    icon: "🔎",
+    roles: ["ADMIN", "USER", "SUPERVISOR", "DEV"],
+  },
 ];
 
 const SETTINGS_SIDEBAR_ITEMS: SidebarItem[] = [
