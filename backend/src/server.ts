@@ -8,6 +8,7 @@ import { authRoutes } from "./routes/auth.routes";
 import { profileRoutes } from "./routes/profile.routes";
 import { uploadRoutes } from "./routes/upload.routes";
 import { uploadNewsRoutes } from "./routes/uploadNews.routes";
+import { uploadApproachRoutes } from "./routes/uploadApproach.routes";
 import { newsRoutes } from "./routes/news.routes";
 import approachRoutes from "./routes/approach.routes";
 
@@ -36,6 +37,7 @@ app.use("/auth", authRoutes);
 app.use("/profile", profileRoutes);
 app.use("/upload", uploadRoutes);
 app.use("/upload/news", uploadNewsRoutes);
+app.use("/upload/approach", uploadApproachRoutes);
 app.use("/news", newsRoutes);
 app.use("/approaches", approachRoutes);
 app.use(errorHandler);
