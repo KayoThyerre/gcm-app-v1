@@ -11,6 +11,7 @@ import { uploadNewsRoutes } from "./routes/uploadNews.routes";
 import { uploadApproachRoutes } from "./routes/uploadApproach.routes";
 import { newsRoutes } from "./routes/news.routes";
 import approachRoutes from "./routes/approach.routes";
+import scaleRoutes from "./routes/scale.routes";
 
 const app = express();
 const uploadsPath = path.resolve(process.cwd(), "uploads");
@@ -40,6 +41,7 @@ app.use("/upload/news", uploadNewsRoutes);
 app.use("/upload/approach", uploadApproachRoutes);
 app.use("/news", newsRoutes);
 app.use("/approaches", approachRoutes);
+app.use("/scales", scaleRoutes);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
