@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "binary"
 }
 
@@ -9,20 +9,20 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  phone     String?
-  avatarUrl String?
-  role      Role     @default(USER)
-  status    Status   @default(PENDING)
-  emailVerified Boolean @default(false)
-  verificationToken String?
+  id                       String    @id @default(uuid())
+  name                     String
+  email                    String    @unique
+  password                 String
+  phone                    String?
+  avatarUrl                String?
+  role                     Role      @default(USER)
+  status                   Status    @default(PENDING)
+  emailVerified            Boolean   @default(false)
+  verificationToken        String?
   verificationTokenExpires DateTime?
-  lastVerificationSentAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  lastVerificationSentAt   DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 }
 
 model News {
@@ -37,19 +37,59 @@ model News {
 }
 
 model Approach {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
   cpf         String?
   rg          String?
   birthDate   DateTime?
   motherName  String?
   notes       String?
-  isConvicted Boolean  @default(false)
+  isConvicted Boolean   @default(false)
   photoUrl    String?
   createdById String
   updatedById String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model ScaleMonth {
+  id        String     @id @default(uuid())
+  month     Int
+  year      Int
+  days      ScaleDay[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model ScaleDay {
+  id           String            @id @default(uuid())
+  scaleMonthId String
+  date         DateTime
+  shiftType    ShiftType
+  notes        String?
+  scaleMonth   ScaleMonth        @relation(fields: [scaleMonthId], references: [id], onDelete: Cascade)
+  assignments  ScaleAssignment[]
+}
+
+model ScaleAssignment {
+  id          String    @id @default(uuid())
+  scaleDayId  String
+  name        String
+  roleInShift ScaleRole
+  startTime   String
+  endTime     String
+  scaleDay    ScaleDay  @relation(fields: [scaleDayId], references: [id], onDelete: Cascade)
+}
+
+enum ShiftType {
+  DAY
+  NIGHT
+}
+
+enum ScaleRole {
+  SUPERVISOR
+  RADIO_OPERATOR
+  PATROL
 }
 
 enum Role {
@@ -64,4 +104,3 @@ enum Status {
   PENDING
   INACTIVE
 }
-
