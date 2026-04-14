@@ -121,4 +121,31 @@ router.get(
   }
 );
 
+router.delete(
+  "/months/:id",
+  ensureAuthenticated,
+  ensureRole(["ADMIN", "DEV"]),
+  async (req, res) => {
+    const { id } = req.params;
+
+    if (typeof id !== "string") {
+      return res.status(400).json({ message: "Invalid id" });
+    }
+
+    const scaleMonth = await prisma.scaleMonth.findUnique({
+      where: { id },
+    });
+
+    if (!scaleMonth) {
+      return res.status(404).json({ message: "Scale month not found" });
+    }
+
+    await prisma.scaleMonth.delete({
+      where: { id },
+    });
+
+    return res.json({ message: "Scale month deleted successfully" });
+  }
+);
+
 export default router;

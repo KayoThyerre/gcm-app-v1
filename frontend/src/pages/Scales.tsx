@@ -34,6 +34,44 @@ type ScaleMonthDetail = {
   days: ScaleDay[];
 };
 
+type InitialCycle = "DAY" | "NIGHT_START" | "NIGHT_END" | "OFF";
+type TeamName = "A" | "B" | "C" | "D";
+
+type ScaleTeamMember = {
+  id: string;
+  name: string;
+  createdAt: string;
+};
+
+type ScaleTeamConfig = {
+  id: string;
+  scaleMonthId: string;
+  teamName: TeamName;
+  initialCycle: InitialCycle;
+  supervisorName: string;
+  radioOperatorName: string;
+  members: ScaleTeamMember[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+type TeamForm = {
+  supervisorName: string;
+  radioOperatorName: string;
+  members: string;
+  initialCycle: InitialCycle;
+};
+
+type TeamForms = Record<TeamName, TeamForm>;
+
+type ApiErrorLike = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
 const monthOptions = [
   { value: 1, label: "Janeiro" },
   { value: 2, label: "Fevereiro" },
@@ -49,17 +87,37 @@ const monthOptions = [
   { value: 12, label: "Dezembro" },
 ];
 
-const cycleValues = ["2/3", "4", "1", "F"];
-const scaleRows = [
-  { label: "Equipe A", offset: 0 },
-  { label: "Equipe B", offset: 1 },
-  { label: "Equipe C", offset: 2 },
-  { label: "Equipe D", offset: 3 },
-  { label: "Radio Operadores", offset: 0 },
+const teamNames: TeamName[] = ["A", "B", "C", "D"];
+const initialCycleOptions: InitialCycle[] = [
+  "DAY",
+  "NIGHT_START",
+  "NIGHT_END",
+  "OFF",
 ];
+const cycleOrder: InitialCycle[] = ["DAY", "NIGHT_START", "NIGHT_END", "OFF"];
+const cycleDisplayMap: Record<InitialCycle, string> = {
+  DAY: "2/3",
+  NIGHT_START: "4",
+  NIGHT_END: "1",
+  OFF: "F",
+};
 
-function getCycleValue(dayIndex: number, offset: number) {
-  return cycleValues[(dayIndex + offset) % cycleValues.length];
+function createEmptyTeamForm(): TeamForm {
+  return {
+    supervisorName: "",
+    radioOperatorName: "",
+    members: "",
+    initialCycle: "DAY",
+  };
+}
+
+function createEmptyTeamForms(): TeamForms {
+  return {
+    A: createEmptyTeamForm(),
+    B: createEmptyTeamForm(),
+    C: createEmptyTeamForm(),
+    D: createEmptyTeamForm(),
+  };
 }
 
 function getDayNumbers(days: ScaleDay[]) {
@@ -75,14 +133,45 @@ function getDayNumbers(days: ScaleDay[]) {
   });
 }
 
+function getApiMessage(error: unknown, fallback: string) {
+  const maybeError = error as ApiErrorLike;
+  return maybeError.response?.data?.message || fallback;
+}
+
+function buildTeamForms(teamConfigs: ScaleTeamConfig[]) {
+  const nextForms = createEmptyTeamForms();
+
+  teamConfigs.forEach((teamConfig) => {
+    nextForms[teamConfig.teamName] = {
+      supervisorName: teamConfig.supervisorName,
+      radioOperatorName: teamConfig.radioOperatorName,
+      members: teamConfig.members.map((member) => member.name).join(", "),
+      initialCycle: teamConfig.initialCycle,
+    };
+  });
+
+  return nextForms;
+}
+
+function getCycleDisplay(initialCycle: InitialCycle, dayIndex: number) {
+  const startIndex = cycleOrder.indexOf(initialCycle);
+  const cycle = cycleOrder[(startIndex + dayIndex) % cycleOrder.length];
+  return cycleDisplayMap[cycle];
+}
+
 export function Scales() {
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
   const [scaleMonths, setScaleMonths] = useState<ScaleMonthSummary[]>([]);
   const [scaleMonth, setScaleMonth] = useState<ScaleMonthDetail | null>(null);
+  const [teamConfigs, setTeamConfigs] = useState<ScaleTeamConfig[]>([]);
+  const [teamForms, setTeamForms] = useState<TeamForms>(createEmptyTeamForms());
   const [loading, setLoading] = useState(true);
+  const [loadingTeams, setLoadingTeams] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [savingTeam, setSavingTeam] = useState<TeamName | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -97,6 +186,12 @@ export function Scales() {
     const response = await api.get<ScaleMonthSummary[]>("/scales/months");
     setScaleMonths(response.data);
     return response.data;
+  }
+
+  async function loadTeamConfigs(scaleMonthId: string) {
+    const response = await api.get<ScaleTeamConfig[]>(`/scales/${scaleMonthId}/teams`);
+    setTeamConfigs(response.data);
+    setTeamForms(buildTeamForms(response.data));
   }
 
   useEffect(() => {
@@ -178,6 +273,51 @@ export function Scales() {
     };
   }, [month, year, scaleMonth?.id, scaleMonths]);
 
+  useEffect(() => {
+    if (!scaleMonth) {
+      setTeamConfigs([]);
+      setTeamForms(createEmptyTeamForms());
+      return;
+    }
+
+    const scaleMonthId = scaleMonth.id;
+    let active = true;
+
+    async function loadCurrentTeamConfigs() {
+      try {
+        setLoadingTeams(true);
+        const response = await api.get<ScaleTeamConfig[]>(
+          `/scales/${scaleMonthId}/teams`
+        );
+
+        if (!active) {
+          return;
+        }
+
+        setTeamConfigs(response.data);
+        setTeamForms(buildTeamForms(response.data));
+      } catch {
+        if (!active) {
+          return;
+        }
+
+        setTeamConfigs([]);
+        setTeamForms(createEmptyTeamForms());
+        setErrorMessage("Nao foi possivel carregar a configuracao das equipes.");
+      } finally {
+        if (active) {
+          setLoadingTeams(false);
+        }
+      }
+    }
+
+    void loadCurrentTeamConfigs();
+
+    return () => {
+      active = false;
+    };
+  }, [scaleMonth?.id]);
+
   const visibleDays = useMemo(() => {
     if (!scaleMonth) {
       return [];
@@ -185,6 +325,13 @@ export function Scales() {
 
     return getDayNumbers(scaleMonth.days);
   }, [scaleMonth]);
+
+  const calendarRows = useMemo(() => {
+    return teamNames.flatMap((teamName) => [
+      { label: `Equipe ${teamName}`, teamName },
+      { label: `Radio ${teamName}`, teamName },
+    ]);
+  }, []);
 
   async function handleGenerateScale() {
     try {
@@ -210,23 +357,94 @@ export function Scales() {
         setYear(createdScaleMonth.year);
       }
     } catch (error) {
-      const apiMessage =
-        typeof error === "object" &&
-        error !== null &&
-        "response" in error &&
-        typeof error.response === "object" &&
-        error.response !== null &&
-        "data" in error.response &&
-        typeof error.response.data === "object" &&
-        error.response.data !== null &&
-        "message" in error.response &&
-        typeof error.response.message === "string"
-          ? error.response.message
-          : null;
-
-      setErrorMessage(apiMessage || "Nao foi possivel gerar a escala.");
+      setErrorMessage(getApiMessage(error, "Nao foi possivel gerar a escala."));
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleDeleteScaleMonth() {
+    if (!scaleMonth) {
+      return;
+    }
+
+    const shouldDelete = window.confirm("Deseja excluir esta escala?");
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      setErrorMessage(null);
+      setSuccessMessage(null);
+
+      await api.delete(`/scales/months/${scaleMonth.id}`);
+
+      setScaleMonths((currentScaleMonths) =>
+        currentScaleMonths.filter((item) => item.id !== scaleMonth.id)
+      );
+      setScaleMonth(null);
+      setTeamConfigs([]);
+      setTeamForms(createEmptyTeamForms());
+      setSuccessMessage("Escala excluida com sucesso.");
+    } catch (error) {
+      setErrorMessage(getApiMessage(error, "Nao foi possivel excluir a escala."));
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function updateTeamForm(teamName: TeamName, field: keyof TeamForm, value: string) {
+    setTeamForms((currentForms) => ({
+      ...currentForms,
+      [teamName]: {
+        ...currentForms[teamName],
+        [field]: value,
+      },
+    }));
+
+    if (errorMessage) {
+      setErrorMessage(null);
+    }
+
+    if (successMessage) {
+      setSuccessMessage(null);
+    }
+  }
+
+  async function handleSaveTeam(teamName: TeamName) {
+    if (!scaleMonth) {
+      setErrorMessage("Gere ou selecione uma escala antes de configurar as equipes.");
+      return;
+    }
+
+    const scaleMonthId = scaleMonth.id;
+    const form = teamForms[teamName];
+    const members = form.members
+      .split(",")
+      .map((member) => member.trim())
+      .filter(Boolean);
+
+    try {
+      setSavingTeam(teamName);
+      setErrorMessage(null);
+      setSuccessMessage(null);
+
+      await api.post(`/scales/${scaleMonthId}/teams`, {
+        teamName,
+        supervisorName: form.supervisorName,
+        radioOperatorName: form.radioOperatorName,
+        members,
+        initialCycle: form.initialCycle,
+      });
+
+      await loadTeamConfigs(scaleMonthId);
+      setSuccessMessage(`Equipe ${teamName} configurada com sucesso.`);
+    } catch (error) {
+      setErrorMessage(getApiMessage(error, `Nao foi possivel salvar a equipe ${teamName}.`));
+    } finally {
+      setSavingTeam(null);
     }
   }
 
@@ -244,7 +462,7 @@ export function Scales() {
       {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
       {successMessage ? <p className="text-sm text-green-600">{successMessage}</p> : null}
 
-      <section className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-900/40 md:grid-cols-[1fr_1fr_auto] md:items-end">
+      <section className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-900/40 md:grid-cols-[1fr_1fr_auto_auto] md:items-end">
         <div className="space-y-1">
           <label
             htmlFor="scale-month"
@@ -298,6 +516,15 @@ export function Scales() {
         >
           {submitting ? "Gerando..." : "Gerar escala"}
         </button>
+
+        <button
+          type="button"
+          onClick={() => void handleDeleteScaleMonth()}
+          disabled={!scaleMonth || deleting}
+          className="rounded-md bg-red-600 px-4 py-2 text-white cursor-pointer transition hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {deleting ? "Excluindo..." : "Excluir escala"}
+        </button>
       </section>
 
       {loading ? <p className="text-slate-600 dark:text-slate-400">Carregando...</p> : null}
@@ -309,64 +536,189 @@ export function Scales() {
       ) : null}
 
       {!loading && scaleMonth ? (
-        <section className="space-y-6">
-          <div className="space-y-1">
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-              {monthOptions.find((option) => option.value === scaleMonth.month)?.label} de {scaleMonth.year}
-            </h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Grade inicial de visualizacao da escala mensal.
-            </p>
-          </div>
+        <>
+          <section className="space-y-5 rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-900/40">
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                Configuracao das equipes
+              </h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Cadastre supervisor, radio operador, integrantes e ciclo inicial para cada equipe do mes selecionado.
+              </p>
+            </div>
 
-          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-            <table className="min-w-full border-separate border-spacing-0 text-sm text-slate-900 dark:text-slate-100">
-              <thead className="bg-blue-600 text-white dark:bg-slate-900 dark:text-slate-200">
-                <tr>
-                  <th className="sticky left-0 bg-blue-600 px-4 py-3 text-left dark:bg-slate-900">
-                    Dias
-                  </th>
-                  {visibleDays.map((day) => (
-                    <th key={day.key} className="px-3 py-3 text-center min-w-[56px]">
-                      {day.day}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {scaleRows.map((row) => (
-                  <tr
-                    key={row.label}
-                    className="odd:bg-white even:bg-slate-50 dark:odd:bg-slate-800 dark:even:bg-slate-900/70"
+            {loadingTeams ? (
+              <p className="text-sm text-slate-600 dark:text-slate-400">Carregando configuracoes...</p>
+            ) : null}
+
+            <div className="grid gap-4 xl:grid-cols-2">
+              {teamNames.map((teamName) => {
+                const form = teamForms[teamName];
+                const existingTeamConfig = teamConfigs.find(
+                  (teamConfig) => teamConfig.teamName === teamName
+                );
+
+                return (
+                  <article
+                    key={teamName}
+                    className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800"
                   >
-                    <td className="sticky left-0 border-t border-slate-200 bg-inherit px-4 py-3 font-medium dark:border-slate-700">
-                      {row.label}
-                    </td>
-                    {visibleDays.map((day, index) => (
-                      <td
-                        key={`${row.label}-${day.key}`}
-                        className="border-t border-slate-200 px-3 py-3 text-center dark:border-slate-700"
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                          Equipe {teamName}
+                        </h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          {existingTeamConfig ? "Equipe ja configurada neste mes." : "Equipe ainda nao configurada neste mes."}
+                        </p>
+                      </div>
+
+                      {existingTeamConfig ? (
+                        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                          Configurada
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        Supervisor
+                      </label>
+                      <input
+                        type="text"
+                        value={form.supervisorName}
+                        onChange={(event) =>
+                          updateTeamForm(teamName, "supervisorName", event.target.value)
+                        }
+                        className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        Radio operador
+                      </label>
+                      <input
+                        type="text"
+                        value={form.radioOperatorName}
+                        onChange={(event) =>
+                          updateTeamForm(teamName, "radioOperatorName", event.target.value)
+                        }
+                        className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        Integrantes
+                      </label>
+                      <textarea
+                        value={form.members}
+                        onChange={(event) => updateTeamForm(teamName, "members", event.target.value)}
+                        rows={4}
+                        placeholder="Separe os nomes por virgula"
+                        className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        Ciclo inicial
+                      </label>
+                      <select
+                        value={form.initialCycle}
+                        onChange={(event) =>
+                          updateTeamForm(teamName, "initialCycle", event.target.value as InitialCycle)
+                        }
+                        className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
                       >
-                        {getCycleValue(index, row.offset)}
-                      </td>
+                        {initialCycleOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => void handleSaveTeam(teamName)}
+                      disabled={savingTeam === teamName}
+                      className="rounded-md bg-blue-600 px-4 py-2 text-white cursor-pointer transition hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {savingTeam === teamName ? "Salvando..." : "Salvar equipe"}
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="space-y-6">
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                {monthOptions.find((option) => option.value === scaleMonth.month)?.label} de {scaleMonth.year}
+              </h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Grade inicial de visualizacao da escala mensal.
+              </p>
+            </div>
+
+            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+              <table className="min-w-full border-separate border-spacing-0 text-sm text-slate-900 dark:text-slate-100">
+                <thead className="bg-blue-600 text-white dark:bg-slate-900 dark:text-slate-200">
+                  <tr>
+                    <th className="sticky left-0 bg-blue-600 px-4 py-3 text-left dark:bg-slate-900">
+                      Dias
+                    </th>
+                    {visibleDays.map((day) => (
+                      <th key={day.key} className="px-3 py-3 text-center min-w-[56px]">
+                        {day.day}
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {calendarRows.map((row) => {
+                    const teamConfig = teamConfigs.find(
+                      (teamConfigItem) => teamConfigItem.teamName === row.teamName
+                    );
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-            <p className="font-medium text-slate-900 dark:text-slate-100">Legenda</p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-              <p>1 = 00h-06h</p>
-              <p>2 = 06h-12h</p>
-              <p>3 = 12h-18h</p>
-              <p>4 = 18h-00h</p>
-              <p>F = Folga</p>
+                    return (
+                      <tr
+                        key={row.label}
+                        className="odd:bg-white even:bg-slate-50 dark:odd:bg-slate-800 dark:even:bg-slate-900/70"
+                      >
+                        <td className="sticky left-0 border-t border-slate-200 bg-inherit px-4 py-3 font-medium dark:border-slate-700">
+                          {row.label}
+                        </td>
+                        {visibleDays.map((day, index) => (
+                          <td
+                            key={`${row.label}-${day.key}`}
+                            className="border-t border-slate-200 px-3 py-3 text-center dark:border-slate-700"
+                          >
+                            {teamConfig ? getCycleDisplay(teamConfig.initialCycle, index) : "-"}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          </div>
-        </section>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+              <p className="font-medium text-slate-900 dark:text-slate-100">Legenda</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                <p>1 = 00h-06h</p>
+                <p>2 = 06h-12h</p>
+                <p>3 = 12h-18h</p>
+                <p>4 = 18h-00h</p>
+                <p>F = Folga</p>
+              </div>
+            </div>
+          </section>
+        </>
       ) : null}
     </div>
   );
