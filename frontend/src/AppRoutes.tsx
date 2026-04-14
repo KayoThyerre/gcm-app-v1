@@ -12,8 +12,10 @@ import { ProfileSecurity } from "./pages/ProfileSecurity";
 import { News } from "./pages/News";
 import { Approaches } from "./pages/Approaches";
 import { ApproachedList } from "./pages/ApproachedList";
+import { Scales } from "./pages/Scales";
 import { CheckEmail } from "./pages/CheckEmail";
 import { PrivateRoute } from "../src/routes/PrivateRoute";
+import { RequireRole } from "./routes/RequireRole";
 import { PrivateLayout } from "./layouts/PrivateLayout";
 import PublicHome from "./pages/public/Home";
 import PublicNews from "./pages/public/News";
@@ -66,6 +68,7 @@ const routes: AppRoute[] = [
           { path: "", element: <Dashboard /> },
           { path: "users", element: <Users /> },
           { path: "news", element: <News /> },
+          { path: "scales", element: <RequireRole allowedRoles={["ADMIN", "DEV"]}><Scales /></RequireRole> },
           { path: "approaches", element: <Approaches /> },
           { path: "abordados", element: <ApproachedList /> },
           { path: "reports", element: <Reports /> },

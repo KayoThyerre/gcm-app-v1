@@ -53,12 +53,13 @@ model Approach {
 }
 
 model ScaleMonth {
-  id        String     @id @default(uuid())
-  month     Int
-  year      Int
-  days      ScaleDay[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id          String            @id @default(uuid())
+  month       Int
+  year        Int
+  days        ScaleDay[]
+  teamConfigs ScaleTeamConfig[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 }
 
 model ScaleDay {
@@ -79,6 +80,34 @@ model ScaleAssignment {
   startTime   String
   endTime     String
   scaleDay    ScaleDay  @relation(fields: [scaleDayId], references: [id], onDelete: Cascade)
+}
+
+model ScaleTeamConfig {
+  id                String            @id @default(uuid())
+  scaleMonthId      String
+  teamName          String
+  initialCycle      InitialCycle
+  supervisorName    String
+  radioOperatorName String
+  scaleMonth        ScaleMonth        @relation(fields: [scaleMonthId], references: [id], onDelete: Cascade)
+  members           ScaleTeamMember[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+model ScaleTeamMember {
+  id           String          @id @default(uuid())
+  teamConfigId String
+  name         String
+  teamConfig   ScaleTeamConfig @relation(fields: [teamConfigId], references: [id], onDelete: Cascade)
+  createdAt    DateTime        @default(now())
+}
+
+enum InitialCycle {
+  DAY
+  NIGHT_START
+  NIGHT_END
+  OFF
 }
 
 enum ShiftType {

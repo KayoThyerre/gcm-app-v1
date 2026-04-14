@@ -20,6 +20,7 @@ const MAIN_SIDEBAR_ITEMS: SidebarItem[] = [
   },
   { label: "Users", path: "/dashboard/admin/users", icon: "📊", roles: ["ADMIN"] },
   { label: "News", path: "/home/news", icon: "N", roles: ["ADMIN"] },
+  { label: "Escalas", path: "/home/scales", icon: "S", roles: ["ADMIN", "DEV"] },
   {
     label: "Abordagens",
     path: "/home/approaches",
