@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { ScaleCalendarView } from "../components/scales/ScaleCalendarView";
+import {
+  ScaleCalendarView,
+  type InitialCycle,
+  type ScaleTeamConfig,
+} from "../components/scales/ScaleCalendarView";
 import { api } from "../services/api";
 
 type ScaleMonth = {
@@ -12,11 +16,30 @@ type ScaleMonth = {
 
 type ApiErrorLike = {
   response?: {
+    status?: number;
     data?: {
       message?: string;
     };
   };
 };
+
+type TeamName = "A" | "B" | "C" | "D";
+
+type TeamForm = {
+  supervisorName: string;
+  radioOperatorName: string;
+  members: string;
+  initialCycle: InitialCycle;
+};
+
+type TeamForms = Record<TeamName, TeamForm>;
+
+type TeamMessage = {
+  type: "success" | "error";
+  text: string;
+};
+
+type TeamMessages = Record<TeamName, TeamMessage | null>;
 
 const monthOptions = [
   { value: 1, label: "Janeiro" },
@@ -33,6 +56,58 @@ const monthOptions = [
   { value: 12, label: "Dezembro" },
 ];
 
+const teamNames: TeamName[] = ["A", "B", "C", "D"];
+const initialCycleOptions: InitialCycle[] = ["DAY", "NIGHT_START", "NIGHT_END", "OFF"];
+
+function createEmptyTeamForm(): TeamForm {
+  return {
+    supervisorName: "",
+    radioOperatorName: "",
+    members: "",
+    initialCycle: "DAY",
+  };
+}
+
+function createEmptyTeamMessages(): TeamMessages {
+  return {
+    A: null,
+    B: null,
+    C: null,
+    D: null,
+  };
+}
+
+function createEmptyTeamForms(): TeamForms {
+  return {
+    A: createEmptyTeamForm(),
+    B: createEmptyTeamForm(),
+    C: createEmptyTeamForm(),
+    D: createEmptyTeamForm(),
+  };
+}
+
+function buildTeamForms(teamConfigs: ScaleTeamConfig[]) {
+  const nextForms = createEmptyTeamForms();
+
+  teamConfigs.forEach((config) => {
+    nextForms[config.teamName] = {
+      supervisorName: config.supervisorName || "",
+      radioOperatorName: config.radioOperatorName || "",
+      members: config.members.map((member) => member.name).join(", "),
+      initialCycle: config.initialCycle || "DAY",
+    };
+  });
+
+  return nextForms;
+}
+
+function isDuplicateScaleMonthError(error: unknown) {
+  const maybeError = error as ApiErrorLike;
+  const status = maybeError.response?.status;
+  const message = maybeError.response?.data?.message?.toLowerCase() || "";
+
+  return status === 400 && (message.includes("existe") || message.includes("already"));
+}
 function getApiMessage(error: unknown, fallback: string) {
   const maybeError = error as ApiErrorLike;
   return maybeError.response?.data?.message || fallback;
@@ -43,8 +118,13 @@ export function Scales() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
   const [scaleMonths, setScaleMonths] = useState<ScaleMonth[]>([]);
+  const [teamConfigs, setTeamConfigs] = useState<ScaleTeamConfig[]>([]);
+  const [teamForms, setTeamForms] = useState<TeamForms>(createEmptyTeamForms());
+  const [teamMessages, setTeamMessages] = useState<TeamMessages>(createEmptyTeamMessages());
   const [loading, setLoading] = useState(true);
+  const [loadingTeams, setLoadingTeams] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [savingTeam, setSavingTeam] = useState<TeamName | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -82,6 +162,52 @@ export function Scales() {
     void initialize();
   }, []);
 
+  useEffect(() => {
+    if (!selectedScaleMonth?.id) {
+      setTeamConfigs([]);
+      setTeamForms(createEmptyTeamForms());
+      setTeamMessages(createEmptyTeamMessages());
+      setLoadingTeams(false);
+      return;
+    }
+
+    const scaleMonthId = selectedScaleMonth.id;
+    let active = true;
+
+    async function loadTeamConfigs() {
+      try {
+        setLoadingTeams(true);
+        const response = await api.get<ScaleTeamConfig[]>(`/scales/${scaleMonthId}/teams`);
+
+        if (!active) {
+          return;
+        }
+
+        setTeamConfigs(response.data);
+        setTeamForms(buildTeamForms(response.data));
+        setTeamMessages(createEmptyTeamMessages());
+      } catch {
+        if (!active) {
+          return;
+        }
+
+        setTeamConfigs([]);
+        setTeamForms(createEmptyTeamForms());
+        setErrorMessage("Nao foi possivel carregar as equipes da escala.");
+      } finally {
+        if (active) {
+          setLoadingTeams(false);
+        }
+      }
+    }
+
+    void loadTeamConfigs();
+
+    return () => {
+      active = false;
+    };
+  }, [selectedScaleMonth?.id]);
+
   async function handleGenerateScale() {
     try {
       setSubmitting(true);
@@ -94,9 +220,35 @@ export function Scales() {
       });
 
       setScaleMonths((currentScaleMonths) => [response.data, ...currentScaleMonths]);
+      setMonth(response.data.month);
+      setYear(response.data.year);
+      setTeamConfigs([]);
+      setTeamForms(createEmptyTeamForms());
+      setTeamMessages(createEmptyTeamMessages());
       setSuccessMessage("Escala gerada com sucesso.");
     } catch (error) {
-      setErrorMessage(getApiMessage(error, "Nao foi possivel gerar a escala."));
+      if (isDuplicateScaleMonthError(error)) {
+        const existingScaleMonth = scaleMonths.find(
+          (scaleMonth) => scaleMonth.month === month && scaleMonth.year === year
+        );
+
+        if (existingScaleMonth) {
+          setMonth(existingScaleMonth.month);
+          setYear(existingScaleMonth.year);
+          setErrorMessage(null);
+          setSuccessMessage("A escala deste mes ja existia e foi carregada.");
+          return;
+        }
+
+        setErrorMessage(
+          "A escala deste mes ja existe, mas nao foi encontrada na lista carregada. Atualize a pagina e tente novamente."
+        );
+        setSuccessMessage(null);
+        return;
+      }
+
+      setErrorMessage(getApiMessage(error, "Nao foi possivel gerar a escala. Verifique se o mes ja existe ou tente novamente."));
+      setSuccessMessage(null);
     } finally {
       setSubmitting(false);
     }
@@ -123,11 +275,122 @@ export function Scales() {
       setScaleMonths((currentScaleMonths) =>
         currentScaleMonths.filter((scaleMonth) => scaleMonth.id !== selectedScaleMonth.id)
       );
+      setTeamConfigs([]);
+      setTeamForms(createEmptyTeamForms());
+      setTeamMessages(createEmptyTeamMessages());
       setSuccessMessage("Escala excluida com sucesso.");
     } catch (error) {
       setErrorMessage(getApiMessage(error, "Nao foi possivel excluir a escala."));
     } finally {
       setDeleting(false);
+    }
+  }
+
+  function updateTeamForm(teamName: TeamName, field: keyof TeamForm, value: string) {
+    setTeamForms((currentForms) => ({
+      ...currentForms,
+      [teamName]: {
+        ...currentForms[teamName],
+        [field]: value,
+      },
+    }));
+    setTeamMessages((currentMessages) => ({
+      ...currentMessages,
+      [teamName]: null,
+    }));
+
+    if (errorMessage) {
+      setErrorMessage(null);
+    }
+
+    if (successMessage) {
+      setSuccessMessage(null);
+    }
+  }
+
+  function setTeamMessage(teamName: TeamName, message: TeamMessage) {
+    setTeamMessages((currentMessages) => ({
+      ...currentMessages,
+      [teamName]: message,
+    }));
+  }
+
+  async function handleSaveTeam(teamName: TeamName) {
+    if (!selectedScaleMonth) {
+      setErrorMessage("Gere ou selecione uma escala antes de configurar equipes.");
+      return;
+    }
+
+    const form = teamForms[teamName];
+    const supervisorName = form.supervisorName.trim();
+    const radioOperatorName = form.radioOperatorName.trim();
+    const initialCycle = form.initialCycle;
+    const members = form.members
+      .split(/[,\r\n]+/)
+      .map((member) => member.trim())
+      .filter(Boolean);
+
+    if (!supervisorName) {
+      setTeamMessage(teamName, {
+        type: "error",
+        text: `Informe o supervisor da equipe ${teamName}.`,
+      });
+      return;
+    }
+
+    if (!radioOperatorName) {
+      setTeamMessage(teamName, {
+        type: "error",
+        text: `Informe o radio operador da equipe ${teamName}.`,
+      });
+      return;
+    }
+
+    if (!initialCycle) {
+      setTeamMessage(teamName, {
+        type: "error",
+        text: `Informe o ciclo inicial da equipe ${teamName}.`,
+      });
+      return;
+    }
+
+    const existingConfig = teamConfigs.find((config) => config.teamName === teamName);
+    const payload = {
+      teamName,
+      initialCycle,
+      supervisorName,
+      radioOperatorName,
+      members,
+    };
+
+    try {
+      setSavingTeam(teamName);
+      setErrorMessage(null);
+      setSuccessMessage(null);
+
+      const response = existingConfig
+        ? await api.put<ScaleTeamConfig>(`/scales/${existingConfig.id}`, payload)
+        : await api.post<ScaleTeamConfig>(`/scales/${selectedScaleMonth.id}/teams`, payload);
+
+      const savedConfig = response.data;
+      const nextConfigs = existingConfig
+        ? teamConfigs.map((config) => (config.id === savedConfig.id ? savedConfig : config))
+        : [...teamConfigs, savedConfig];
+
+      setTeamConfigs(nextConfigs);
+      setTeamForms(buildTeamForms(nextConfigs));
+      setTeamMessage(teamName, {
+        type: "success",
+        text: `Equipe ${teamName} salva com sucesso.`,
+      });
+      setSuccessMessage(null);
+    } catch (error) {
+      setTeamMessage(teamName, {
+        type: "error",
+        text: getApiMessage(error, `Nao foi possivel salvar a equipe ${teamName}.`),
+      });
+    } finally {
+      setSavingTeam(null);
     }
   }
 
@@ -138,7 +401,7 @@ export function Scales() {
           Escalas mensais
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Base limpa para reconstrucao da escala pelo modelo Excel.
+          Configure as equipes do mes e visualize a escala pelo modelo Excel.
         </p>
       </div>
 
@@ -214,13 +477,152 @@ export function Scales() {
 
       {!loading ? (
         <>
-          <section className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-800">
-            <p className="text-slate-600 dark:text-slate-300">
-              Calendário ainda não implementado
-            </p>
-          </section>
+          {!selectedScaleMonth ? (
+            <section className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-800">
+              <p className="text-slate-600 dark:text-slate-300">
+                Gere ou selecione uma escala para configurar as equipes.
+              </p>
+            </section>
+          ) : null}
 
-          <ScaleCalendarView />
+          {selectedScaleMonth ? (
+            <section className="space-y-5 rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-900/40">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                  Configuracao das equipes
+                </h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Cadastre ou edite supervisor, radio operador, integrantes e ciclo inicial.
+                </p>
+              </div>
+
+              {loadingTeams ? (
+                <p className="text-sm text-slate-600 dark:text-slate-400">Carregando equipes...</p>
+              ) : null}
+
+              <div className="grid gap-4 xl:grid-cols-2">
+                {teamNames.map((teamName) => {
+                  const form = teamForms[teamName];
+                  const existingConfig = teamConfigs.find(
+                    (config) => config.teamName === teamName
+                  );
+                  const teamMessage = teamMessages[teamName];
+
+                  return (
+                    <article
+                      key={teamName}
+                      className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                            Equipe {teamName}
+                          </h3>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">
+                            {existingConfig ? "Editando configuracao existente." : "Nova configuracao."}
+                          </p>
+                        </div>
+
+                        {existingConfig ? (
+                          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                            Configurada
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                          Supervisor
+                        </label>
+                        <input
+                          type="text"
+                          value={form.supervisorName}
+                          onChange={(event) =>
+                            updateTeamForm(teamName, "supervisorName", event.target.value)
+                          }
+                          className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                          Radio operador
+                        </label>
+                        <input
+                          type="text"
+                          value={form.radioOperatorName}
+                          onChange={(event) =>
+                            updateTeamForm(teamName, "radioOperatorName", event.target.value)
+                          }
+                          className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                          Integrantes
+                        </label>
+                        <textarea
+                          value={form.members}
+                          onChange={(event) =>
+                            updateTeamForm(teamName, "members", event.target.value)
+                          }
+                          rows={4}
+                          placeholder="Separe os nomes por virgula ou por linha"
+                          className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                          Ciclo inicial
+                        </label>
+                        <select
+                          value={form.initialCycle}
+                          onChange={(event) =>
+                            updateTeamForm(teamName, "initialCycle", event.target.value)
+                          }
+                          className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                        >
+                          {initialCycleOptions.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {teamMessage ? (
+                        <p
+                          className={`text-sm ${
+                            teamMessage.type === "success" ? "text-green-600" : "text-red-600"
+                          }`}
+                        >
+                          {teamMessage.text}
+                        </p>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        onClick={() => void handleSaveTeam(teamName)}
+                        disabled={savingTeam === teamName || loadingTeams}
+                        className="rounded-md bg-blue-600 px-4 py-2 text-white cursor-pointer transition hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {savingTeam === teamName ? "Salvando..." : "Salvar equipe"}
+                      </button>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
+
+          <ScaleCalendarView
+            teamConfigs={teamConfigs}
+            month={month}
+            year={year}
+            loading={loadingTeams}
+          />
         </>
       ) : null}
     </div>

@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { isAxiosError } from "axios";
 import { api } from "../services/api";
 
@@ -30,6 +30,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const storedUser = localStorage.getItem("auth:user");
     if (token) {
       api.defaults.headers.common.Authorization = `Bearer ${token}`;
+    } else {
+      delete api.defaults.headers.common.Authorization;
     }
     return storedUser ? JSON.parse(storedUser) : null;
   });
@@ -86,6 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   function logout() {
     localStorage.removeItem("auth:token");
     localStorage.removeItem("auth:user");
+    delete api.defaults.headers.common.Authorization;
     setUserState(null);
   }
 
