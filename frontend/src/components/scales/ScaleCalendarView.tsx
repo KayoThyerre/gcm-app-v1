@@ -25,6 +25,7 @@ type CellValue = "2/3" | "4" | "1" | "DES";
 type CalendarDay = {
   day: number;
   weekday: string;
+  isWeekend: boolean;
 };
 
 type ScalePerson = {
@@ -44,6 +45,10 @@ type ScaleCalendarViewProps = {
   month: number;
   year: number;
   loading?: boolean;
+  title?: string;
+  subtitle?: string;
+  selectedLabel?: string | null;
+  emptyTeamsMessage?: string;
 };
 
 const teamOrder: ScaleTeamConfig["teamName"][] = ["A", "B", "C", "D"];
@@ -68,10 +73,12 @@ function buildCalendarDays(month: number, year: number): CalendarDay[] {
   return Array.from({ length: daysInMonth }, (_, index) => {
     const day = index + 1;
     const date = new Date(year, month - 1, day);
+    const weekdayIndex = date.getDay();
 
     return {
       day,
-      weekday: weekdayLabels[date.getDay()],
+      weekday: weekdayLabels[weekdayIndex],
+      isWeekend: weekdayIndex === 0 || weekdayIndex === 6,
     };
   });
 }
@@ -148,6 +155,10 @@ export function ScaleCalendarView({
   month,
   year,
   loading = false,
+  title = "Visualizacao do calendario",
+  subtitle = "Estrutura visual usando as configuracoes reais das equipes e o ciclo inicial de cada equipe.",
+  selectedLabel = null,
+  emptyTeamsMessage = "Nenhuma equipe configurada para este mes.",
 }: ScaleCalendarViewProps) {
   const days = useMemo(() => buildCalendarDays(month, year), [month, year]);
 
@@ -164,20 +175,24 @@ export function ScaleCalendarView({
 
   return (
     <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-          Visualizacao do calendario
-        </h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          Estrutura visual usando as configuracoes reais das equipes e o ciclo inicial de cada equipe.
-        </p>
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+          <p className="text-sm text-slate-600 dark:text-slate-400">{subtitle}</p>
+        </div>
+
+        {selectedLabel ? (
+          <span className="inline-flex w-fit rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 ring-1 ring-blue-200 dark:bg-blue-950/40 dark:text-blue-200 dark:ring-blue-900/60">
+            {selectedLabel}
+          </span>
+        ) : null}
       </div>
 
       {loading ? <p className="text-sm text-slate-600 dark:text-slate-400">Carregando equipes...</p> : null}
 
       {!loading && scaleGroups.length === 0 ? (
         <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-          Nenhuma equipe configurada para este mes.
+          {emptyTeamsMessage}
         </div>
       ) : null}
 
@@ -201,7 +216,12 @@ export function ScaleCalendarView({
                 {days.map((item) => (
                   <th
                     key={`day-${item.day}`}
-                    className="w-[3rem] min-w-[3rem] border border-slate-300 bg-blue-600 px-2 py-2 text-center font-bold text-white dark:border-slate-700 dark:bg-blue-500"
+                    className={
+                      "w-[3rem] min-w-[3rem] border px-2 py-2 text-center font-bold text-white dark:border-slate-700 " +
+                      (item.isWeekend
+                        ? "border-rose-300 bg-rose-500 dark:bg-rose-600"
+                        : "border-slate-300 bg-blue-600 dark:bg-blue-500")
+                    }
                   >
                     {item.day}
                   </th>
@@ -211,7 +231,12 @@ export function ScaleCalendarView({
                 {days.map((item) => (
                   <th
                     key={`weekday-${item.day}`}
-                    className="w-[3rem] min-w-[3rem] border border-slate-300 bg-blue-50 px-2 py-1 text-center font-semibold text-blue-800 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-200"
+                    className={
+                      "w-[3rem] min-w-[3rem] border px-2 py-1 text-center font-semibold dark:border-slate-700 " +
+                      (item.isWeekend
+                        ? "border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-200"
+                        : "border-slate-300 bg-blue-50 text-blue-800 dark:bg-slate-800 dark:text-blue-200")
+                    }
                   >
                     {item.weekday}
                   </th>
@@ -270,21 +295,11 @@ export function ScaleCalendarView({
       ) : null}
 
       <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200 sm:grid-cols-2 lg:grid-cols-5">
-        <span>
-          <strong>1</strong> = 00h-06h
-        </span>
-        <span>
-          <strong>2</strong> = 06h-12h
-        </span>
-        <span>
-          <strong>3</strong> = 12h-18h
-        </span>
-        <span>
-          <strong>4</strong> = 18h-00h
-        </span>
-        <span>
-          <strong>DES</strong> = Descanso
-        </span>
+        <span><strong>1</strong> = 00h-06h</span>
+        <span><strong>2</strong> = 06h-12h</span>
+        <span><strong>3</strong> = 12h-18h</span>
+        <span><strong>4</strong> = 18h-00h</span>
+        <span><strong>DES</strong> = Descanso</span>
       </div>
     </section>
   );

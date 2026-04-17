@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../hooks/useTheme";
@@ -21,6 +21,12 @@ const MAIN_SIDEBAR_ITEMS: SidebarItem[] = [
   { label: "Users", path: "/dashboard/admin/users", icon: "📊", roles: ["ADMIN"] },
   { label: "News", path: "/home/news", icon: "N", roles: ["ADMIN"] },
   { label: "Escalas", path: "/home/scales", icon: "S", roles: ["ADMIN", "DEV"] },
+  {
+    label: "Scale View",
+    path: "/home/scale-view",
+    icon: "📅",
+    roles: ["ADMIN", "USER", "SUPERVISOR", "DEV"],
+  },
   {
     label: "Abordagens",
     path: "/home/approaches",

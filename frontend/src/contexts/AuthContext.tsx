@@ -28,12 +28,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUserState] = useState<User | null>(() => {
     const token = localStorage.getItem("auth:token");
     const storedUser = localStorage.getItem("auth:user");
-    if (token) {
-      api.defaults.headers.common.Authorization = `Bearer ${token}`;
-    } else {
+
+    if (!token) {
       delete api.defaults.headers.common.Authorization;
+      return null;
     }
-    return storedUser ? JSON.parse(storedUser) : null;
+
+    api.defaults.headers.common.Authorization = `Bearer ${token}`;
+
+    if (!storedUser) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(storedUser);
+    } catch {
+      localStorage.removeItem("auth:token");
+      localStorage.removeItem("auth:user");
+      delete api.defaults.headers.common.Authorization;
+      return null;
+    }
   });
 
   const [authError, setAuthError] = useState<string | null>(null);

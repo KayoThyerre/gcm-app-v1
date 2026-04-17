@@ -1,4 +1,4 @@
-﻿import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Login } from "../src/pages/Login";
 import { Register } from "./pages/Register";
 import { Home } from "../src/pages/Home";
@@ -13,6 +13,7 @@ import { News } from "./pages/News";
 import { Approaches } from "./pages/Approaches";
 import { ApproachedList } from "./pages/ApproachedList";
 import { Scales } from "./pages/Scales";
+import { ScaleView } from "./pages/ScaleView";
 import { CheckEmail } from "./pages/CheckEmail";
 import { PrivateRoute } from "../src/routes/PrivateRoute";
 import { RequireRole } from "./routes/RequireRole";
@@ -69,6 +70,7 @@ const routes: AppRoute[] = [
           { path: "users", element: <Users /> },
           { path: "news", element: <News /> },
           { path: "scales", element: <RequireRole allowedRoles={["ADMIN", "DEV"]}><Scales /></RequireRole> },
+          { path: "scale-view", element: <ScaleView /> },
           { path: "approaches", element: <Approaches /> },
           { path: "abordados", element: <ApproachedList /> },
           { path: "reports", element: <Reports /> },
