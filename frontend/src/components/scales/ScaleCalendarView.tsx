@@ -1,6 +1,15 @@
 import { Fragment, useMemo } from "react";
 
 export type InitialCycle = "DAY" | "NIGHT_START" | "NIGHT_END" | "OFF";
+export type ScaleCellValue =
+  | "DAY"
+  | "NIGHT_START"
+  | "NIGHT_END"
+  | "NIGHT_FULL"
+  | "OFF"
+  | "MEDICAL_LEAVE"
+  | "BANK_HOURS"
+  | "VACATION";
 
 export type ScaleTeamMember = {
   id: string;
@@ -20,7 +29,16 @@ export type ScaleTeamConfig = {
   updatedAt?: string;
 };
 
-type CellValue = "2/3" | "4" | "1" | "DES";
+export type ScaleCellOverride = {
+  id: string;
+  scaleMonthId: string;
+  teamName: string;
+  personKey: string;
+  day: number;
+  value: ScaleCellValue;
+  createdAt?: string;
+  updatedAt?: string;
+};
 
 type CalendarDay = {
   day: number;
@@ -28,16 +46,24 @@ type CalendarDay = {
   isWeekend: boolean;
 };
 
-type ScalePerson = {
-  name: string;
+type ScaleRow = {
+  groupTitle: string;
+  groupAccentClass: string;
+  scaleMonthId: string;
+  teamName: string;
+  personKey: string;
+  personName: string;
   role: string;
-  cells: CellValue[];
+  initialCycle?: InitialCycle;
 };
 
-type ScaleGroup = {
-  title: string;
-  accentClass: string;
-  people: ScalePerson[];
+export type ScaleCellClickData = {
+  teamName: string;
+  personKey: string;
+  personName: string;
+  day: number;
+  value: ScaleCellValue;
+  override: ScaleCellOverride | null;
 };
 
 type ScaleCalendarViewProps = {
@@ -49,16 +75,22 @@ type ScaleCalendarViewProps = {
   subtitle?: string;
   selectedLabel?: string | null;
   emptyTeamsMessage?: string;
+  cellOverrides?: ScaleCellOverride[];
+  onCellClick?: (data: ScaleCellClickData) => void;
 };
 
 const teamOrder: ScaleTeamConfig["teamName"][] = ["A", "B", "C", "D"];
 const weekdayLabels = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
 const cycleOrder: InitialCycle[] = ["DAY", "NIGHT_START", "NIGHT_END", "OFF"];
-const cycleDisplayMap: Record<InitialCycle, CellValue> = {
+const displayMap: Record<ScaleCellValue, string> = {
   DAY: "2/3",
   NIGHT_START: "4",
   NIGHT_END: "1",
+  NIGHT_FULL: "1/4",
   OFF: "DES",
+  MEDICAL_LEAVE: "D.M.",
+  BANK_HOURS: "B.H.",
+  VACATION: "FER",
 };
 const teamAccentClasses: Record<ScaleTeamConfig["teamName"], string> = {
   A: "bg-blue-600",
@@ -66,6 +98,19 @@ const teamAccentClasses: Record<ScaleTeamConfig["teamName"], string> = {
   C: "bg-amber-500",
   D: "bg-rose-600",
 };
+
+function normalizeKeyPart(value: string) {
+  return value.trim();
+}
+
+function getOverrideKey(scaleMonthId: string, teamName: string, personKey: string, day: number) {
+  return [
+    normalizeKeyPart(scaleMonthId),
+    normalizeKeyPart(teamName),
+    normalizeKeyPart(personKey),
+    String(day),
+  ].join("::");
+}
 
 function buildCalendarDays(month: number, year: number): CalendarDay[] {
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -83,71 +128,82 @@ function buildCalendarDays(month: number, year: number): CalendarDay[] {
   });
 }
 
-function buildCycleCells(initialCycle: InitialCycle | undefined, totalDays: number): CellValue[] {
+function getBaseCycleValue(initialCycle: InitialCycle | undefined, dayIndex: number): ScaleCellValue {
   const startIndex = cycleOrder.indexOf(initialCycle || "DAY");
   const safeStartIndex = startIndex >= 0 ? startIndex : 0;
-
-  return Array.from({ length: totalDays }, (_, index) => {
-    const cycle = cycleOrder[(safeStartIndex + index) % cycleOrder.length];
-    return cycleDisplayMap[cycle];
-  });
+  return cycleOrder[(safeStartIndex + dayIndex) % cycleOrder.length];
 }
 
-function buildTeamGroup(config: ScaleTeamConfig, totalDays: number): ScaleGroup {
-  const cells = buildCycleCells(config.initialCycle, totalDays);
-  const people: ScalePerson[] = [
-    {
-      name: config.supervisorName || "Supervisor nao informado",
+function buildRows(teamConfigs: ScaleTeamConfig[]) {
+  const orderedConfigs = teamOrder
+    .map((teamName) => teamConfigs.find((config) => config.teamName === teamName))
+    .filter((config): config is ScaleTeamConfig => Boolean(config));
+
+  const rows: ScaleRow[] = [];
+
+  orderedConfigs.forEach((config) => {
+    rows.push({
+      groupTitle: `Equipe ${config.teamName}`,
+      groupAccentClass: teamAccentClasses[config.teamName],
+      scaleMonthId: config.scaleMonthId,
+      teamName: config.teamName,
+      personKey: `supervisor-${config.teamName}`,
+      personName: config.supervisorName || "Supervisor nao informado",
       role: "Supervisor",
-      cells,
-    },
-    ...config.members.map((member) => ({
-      name: member.name,
-      role: "Integrante",
-      cells,
-    })),
-  ];
+      initialCycle: config.initialCycle,
+    });
 
-  return {
-    title: `Equipe ${config.teamName}`,
-    accentClass: teamAccentClasses[config.teamName],
-    people,
-  };
-}
+    config.members.forEach((member) => {
+      rows.push({
+        groupTitle: `Equipe ${config.teamName}`,
+        groupAccentClass: teamAccentClasses[config.teamName],
+        scaleMonthId: config.scaleMonthId,
+        teamName: config.teamName,
+        personKey: `member-${member.id}`,
+        personName: member.name,
+        role: "Integrante",
+        initialCycle: config.initialCycle,
+      });
+    });
+  });
 
-function buildRadioGroup(configs: ScaleTeamConfig[], totalDays: number): ScaleGroup | null {
-  const people = configs
-    .filter((config) => config.radioOperatorName)
-    .map((config) => ({
-      name: config.radioOperatorName,
+  orderedConfigs.forEach((config) => {
+    if (!config.radioOperatorName) {
+      return;
+    }
+
+    rows.push({
+      groupTitle: "Radio Operadores",
+      groupAccentClass: "bg-slate-700",
+      scaleMonthId: config.scaleMonthId,
+      teamName: config.teamName,
+      personKey: `radio-${config.teamName}`,
+      personName: config.radioOperatorName,
       role: `Radio Equipe ${config.teamName}`,
-      cells: buildCycleCells(config.initialCycle, totalDays),
-    }));
+      initialCycle: config.initialCycle,
+    });
+  });
 
-  if (people.length === 0) {
-    return null;
-  }
-
-  return {
-    title: "Radio Operadores",
-    accentClass: "bg-slate-700",
-    people,
-  };
+  return rows;
 }
 
-function getCellClass(value: CellValue) {
+function getCellClass(value: ScaleCellValue) {
   const classes = {
-    "2/3":
-      "border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200",
-    "4":
-      "border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-200",
-    "1":
-      "border-sky-200 bg-sky-100 text-sky-800 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-200",
-    DES:
-      "border-slate-300 bg-slate-200 text-slate-600 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200",
+    DAY: "border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200",
+    NIGHT_START: "border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-200",
+    NIGHT_END: "border-sky-200 bg-sky-100 text-sky-800 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-200",
+    NIGHT_FULL: "border-fuchsia-200 bg-fuchsia-100 text-fuchsia-800 dark:border-fuchsia-800 dark:bg-fuchsia-950/60 dark:text-fuchsia-200",
+    OFF: "border-slate-300 bg-slate-200 text-slate-600 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200",
+    MEDICAL_LEAVE: "border-rose-200 bg-rose-100 text-rose-800 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-200",
+    BANK_HOURS: "border-violet-200 bg-violet-100 text-violet-800 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-200",
+    VACATION: "border-cyan-200 bg-cyan-100 text-cyan-800 dark:border-cyan-800 dark:bg-cyan-950/60 dark:text-cyan-200",
   };
 
   return classes[value];
+}
+
+export function getScaleCellLabel(value: ScaleCellValue) {
+  return displayMap[value];
 }
 
 export function ScaleCalendarView({
@@ -159,19 +215,43 @@ export function ScaleCalendarView({
   subtitle = "Estrutura visual usando as configuracoes reais das equipes e o ciclo inicial de cada equipe.",
   selectedLabel = null,
   emptyTeamsMessage = "Nenhuma equipe configurada para este mes.",
+  cellOverrides = [],
+  onCellClick,
 }: ScaleCalendarViewProps) {
   const days = useMemo(() => buildCalendarDays(month, year), [month, year]);
+  const rows = useMemo(() => buildRows(teamConfigs), [teamConfigs]);
 
-  const scaleGroups = useMemo(() => {
-    const orderedConfigs = teamOrder
-      .map((teamName) => teamConfigs.find((config) => config.teamName === teamName))
-      .filter((config): config is ScaleTeamConfig => Boolean(config));
+  const overridesMap = useMemo(() => {
+    return new Map(
+      cellOverrides.map((override) => [
+        getOverrideKey(override.scaleMonthId, override.teamName, override.personKey, override.day),
+        override,
+      ])
+    );
+  }, [cellOverrides]);
 
-    const teamGroups = orderedConfigs.map((config) => buildTeamGroup(config, days.length));
-    const radioGroup = buildRadioGroup(orderedConfigs, days.length);
+  const groupedRows = useMemo(() => {
+    const groups = new Map<string, { accentClass: string; rows: ScaleRow[] }>();
 
-    return radioGroup ? [...teamGroups, radioGroup] : teamGroups;
-  }, [days.length, teamConfigs]);
+    rows.forEach((row) => {
+      if (!groups.has(row.groupTitle)) {
+        groups.set(row.groupTitle, {
+          accentClass: row.groupAccentClass,
+          rows: [],
+        });
+      }
+
+      groups.get(row.groupTitle)?.rows.push(row);
+    });
+
+    return Array.from(groups.entries()).map(([title, value]) => ({
+      title,
+      accentClass: value.accentClass,
+      rows: value.rows,
+    }));
+  }, [rows]);
+
+  const hasRows = groupedRows.length > 0;
 
   return (
     <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
@@ -190,13 +270,13 @@ export function ScaleCalendarView({
 
       {loading ? <p className="text-sm text-slate-600 dark:text-slate-400">Carregando equipes...</p> : null}
 
-      {!loading && scaleGroups.length === 0 ? (
+      {!loading && !hasRows ? (
         <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
           {emptyTeamsMessage}
         </div>
       ) : null}
 
-      {scaleGroups.length > 0 ? (
+      {hasRows ? (
         <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
           <table className="min-w-[1850px] border-collapse text-xs">
             <thead>
@@ -244,7 +324,7 @@ export function ScaleCalendarView({
               </tr>
             </thead>
             <tbody>
-              {scaleGroups.map((group) => (
+              {groupedRows.map((group) => (
                 <Fragment key={group.title}>
                   <tr>
                     <td
@@ -260,31 +340,56 @@ export function ScaleCalendarView({
                     </td>
                   </tr>
 
-                  {group.people.map((person) => (
-                    <tr
-                      key={`${group.title}-${person.name}`}
-                      className="hover:bg-blue-50 dark:hover:bg-slate-800/80"
-                    >
+                  {group.rows.map((row) => (
+                    <tr key={`${group.title}-${row.personKey}`} className="hover:bg-blue-50 dark:hover:bg-slate-800/80">
                       <td className="sticky left-0 z-20 border border-slate-300 bg-white px-3 py-2 font-medium text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
-                        {person.name}
+                        {row.personName}
                       </td>
                       <td className="sticky left-[180px] z-20 border border-slate-300 bg-white px-3 py-2 text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-                        {person.role}
+                        {row.role}
                       </td>
-                      {person.cells.map((cell, index) => (
-                        <td
-                          key={`${person.name}-${days[index].day}`}
-                          className="border border-slate-200 bg-white p-1 text-center dark:border-slate-800 dark:bg-slate-950"
-                        >
-                          <span
-                            className={`inline-flex min-h-7 w-full items-center justify-center rounded border px-1 font-bold ${getCellClass(
-                              cell
-                            )}`}
+                      {days.map((dayItem, index) => {
+                        const overrideKey = getOverrideKey(
+                          row.scaleMonthId,
+                          row.teamName,
+                          row.personKey,
+                          dayItem.day
+                        );
+                        const override = overridesMap.get(overrideKey) || null;
+                        const value = override?.value || getBaseCycleValue(row.initialCycle, index);
+                        const interactive = Boolean(onCellClick);
+
+                        return (
+                          <td
+                            key={`${row.personKey}-${dayItem.day}`}
+                            className="border border-slate-200 bg-white p-1 text-center dark:border-slate-800 dark:bg-slate-950"
                           >
-                            {cell}
-                          </span>
-                        </td>
-                      ))}
+                            <button
+                              type="button"
+                              disabled={!interactive}
+                              onClick={() =>
+                                onCellClick?.({
+                                  teamName: row.teamName,
+                                  personKey: row.personKey,
+                                  personName: row.personName,
+                                  day: dayItem.day,
+                                  value,
+                                  override,
+                                })
+                              }
+                              className={
+                                "relative inline-flex min-h-7 w-full items-center justify-center rounded border px-1 font-bold transition " +
+                                getCellClass(value) +
+                                (override ? " ring-2 ring-blue-500/60" : "") +
+                                (interactive ? " cursor-pointer hover:scale-[1.02]" : " cursor-default")
+                              }
+                            >
+                              {getScaleCellLabel(value)}
+                              {override ? <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-300" /> : null}
+                            </button>
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                 </Fragment>
@@ -294,12 +399,16 @@ export function ScaleCalendarView({
         </div>
       ) : null}
 
-      <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-8">
         <span><strong>1</strong> = 00h-06h</span>
         <span><strong>2</strong> = 06h-12h</span>
         <span><strong>3</strong> = 12h-18h</span>
         <span><strong>4</strong> = 18h-00h</span>
+        <span><strong>1/4</strong> = Noite cheia</span>
         <span><strong>DES</strong> = Descanso</span>
+        <span><strong>D.M.</strong> = Licenca medica</span>
+        <span><strong>B.H.</strong> = Banco de horas</span>
+        <span><strong>FER</strong> = Ferias</span>
       </div>
     </section>
   );

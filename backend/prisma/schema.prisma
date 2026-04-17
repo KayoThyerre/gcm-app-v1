@@ -108,14 +108,14 @@ model ScaleCellOverride {
   id           String         @id @default(uuid())
   scaleMonthId String
   teamName     String
-  personName   String
+  personKey    String
   day          Int
   value        ScaleCellValue
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   scaleMonth   ScaleMonth     @relation(fields: [scaleMonthId], references: [id], onDelete: Cascade)
 
-  @@unique([scaleMonthId, teamName, personName, day])
+  @@unique([scaleMonthId, teamName, personKey, day])
 }
 
 enum InitialCycle {

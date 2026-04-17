@@ -29,7 +29,7 @@ router.get(
 
     const overrides = await prisma.scaleCellOverride.findMany({
       where: { scaleMonthId },
-      orderBy: [{ day: "asc" }, { teamName: "asc" }, { personName: "asc" }],
+      orderBy: [{ day: "asc" }, { teamName: "asc" }, { personKey: "asc" }],
     });
 
     return res.json(overrides);
@@ -47,9 +47,9 @@ router.post(
       return res.status(400).json({ message: "Invalid scaleMonthId" });
     }
 
-    const { teamName, personName, day, value } = req.body as {
+    const { teamName, personKey, day, value } = req.body as {
       teamName?: unknown;
-      personName?: unknown;
+      personKey?: unknown;
       day?: unknown;
       value?: unknown;
     };
@@ -58,8 +58,8 @@ router.post(
       return res.status(400).json({ message: "teamName is required" });
     }
 
-    if (typeof personName !== "string" || !personName.trim()) {
-      return res.status(400).json({ message: "personName is required" });
+    if (typeof personKey !== "string" || !personKey.trim()) {
+      return res.status(400).json({ message: "personKey is required" });
     }
 
     if (typeof day !== "number" || !Number.isInteger(day) || day < 1 || day > 31) {
@@ -82,12 +82,15 @@ router.post(
       return res.status(404).json({ message: "Scale month not found" });
     }
 
+    const normalizedTeamName = teamName.trim();
+    const normalizedPersonKey = personKey.trim();
+
     const override = await prisma.scaleCellOverride.upsert({
       where: {
-        scaleMonthId_teamName_personName_day: {
+        scaleMonthId_teamName_personKey_day: {
           scaleMonthId,
-          teamName: teamName.trim(),
-          personName: personName.trim(),
+          teamName: normalizedTeamName,
+          personKey: normalizedPersonKey,
           day,
         },
       },
@@ -96,8 +99,8 @@ router.post(
       },
       create: {
         scaleMonthId,
-        teamName: teamName.trim(),
-        personName: personName.trim(),
+        teamName: normalizedTeamName,
+        personKey: normalizedPersonKey,
         day,
         value: value as ScaleCellValue,
       },

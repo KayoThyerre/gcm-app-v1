@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ScaleCalendarView,
+  getScaleCellLabel,
   type InitialCycle,
+  type ScaleCellClickData,
+  type ScaleCellOverride,
+  type ScaleCellValue,
   type ScaleTeamConfig,
 } from "../components/scales/ScaleCalendarView";
 import { api } from "../services/api";
@@ -41,6 +45,15 @@ type TeamMessage = {
 
 type TeamMessages = Record<TeamName, TeamMessage | null>;
 
+type OverrideModalState = {
+  teamName: string;
+  personKey: string;
+  personName: string;
+  day: number;
+  value: ScaleCellValue;
+  override: ScaleCellOverride | null;
+};
+
 const monthOptions = [
   { value: 1, label: "Janeiro" },
   { value: 2, label: "Fevereiro" },
@@ -58,6 +71,16 @@ const monthOptions = [
 
 const teamNames: TeamName[] = ["A", "B", "C", "D"];
 const initialCycleOptions: InitialCycle[] = ["DAY", "NIGHT_START", "NIGHT_END", "OFF"];
+const overrideValueOptions: ScaleCellValue[] = [
+  "DAY",
+  "NIGHT_START",
+  "NIGHT_END",
+  "NIGHT_FULL",
+  "OFF",
+  "MEDICAL_LEAVE",
+  "BANK_HOURS",
+  "VACATION",
+];
 
 function createEmptyTeamForm(): TeamForm {
   return {
@@ -108,6 +131,7 @@ function isDuplicateScaleMonthError(error: unknown) {
 
   return status === 400 && (message.includes("existe") || message.includes("already"));
 }
+
 function getApiMessage(error: unknown, fallback: string) {
   const maybeError = error as ApiErrorLike;
   return maybeError.response?.data?.message || fallback;
@@ -118,7 +142,9 @@ export function Scales() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
   const [scaleMonths, setScaleMonths] = useState<ScaleMonth[]>([]);
+  const [selectedScaleMonth, setSelectedScaleMonth] = useState<ScaleMonth | null>(null);
   const [teamConfigs, setTeamConfigs] = useState<ScaleTeamConfig[]>([]);
+  const [cellOverrides, setCellOverrides] = useState<ScaleCellOverride[]>([]);
   const [teamForms, setTeamForms] = useState<TeamForms>(createEmptyTeamForms());
   const [teamMessages, setTeamMessages] = useState<TeamMessages>(createEmptyTeamMessages());
   const [loading, setLoading] = useState(true);
@@ -126,14 +152,14 @@ export function Scales() {
   const [submitting, setSubmitting] = useState(false);
   const [savingTeam, setSavingTeam] = useState<TeamName | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [activeOverrideCell, setActiveOverrideCell] = useState<OverrideModalState | null>(null);
+  const [overrideValue, setOverrideValue] = useState<ScaleCellValue>("DAY");
+  const [savingOverride, setSavingOverride] = useState(false);
+  const [removingOverride, setRemovingOverride] = useState(false);
+  const [overrideErrorMessage, setOverrideErrorMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const selectedScaleMonth = useMemo(() => {
-    return scaleMonths.find(
-      (scaleMonth) => scaleMonth.month === month && scaleMonth.year === year
-    );
-  }, [month, scaleMonths, year]);
 
   async function loadScaleMonths() {
     const response = await api.get<ScaleMonth[]>("/scales/months");
@@ -163,10 +189,20 @@ export function Scales() {
   }, []);
 
   useEffect(() => {
+    const existingScaleMonth = scaleMonths.find(
+      (scaleMonth) => scaleMonth.month === month && scaleMonth.year === year
+    );
+
+    setSelectedScaleMonth(existingScaleMonth || null);
+  }, [month, scaleMonths, year]);
+  useEffect(() => {
     if (!selectedScaleMonth?.id) {
       setTeamConfigs([]);
+      setCellOverrides([]);
       setTeamForms(createEmptyTeamForms());
       setTeamMessages(createEmptyTeamMessages());
+      setActiveOverrideCell(null);
+      setOverrideErrorMessage(null);
       setLoadingTeams(false);
       return;
     }
@@ -174,17 +210,22 @@ export function Scales() {
     const scaleMonthId = selectedScaleMonth.id;
     let active = true;
 
-    async function loadTeamConfigs() {
+    async function loadScaleMonthData() {
       try {
         setLoadingTeams(true);
-        const response = await api.get<ScaleTeamConfig[]>(`/scales/${scaleMonthId}/teams`);
+        setOverrideErrorMessage(null);
+        const [teamConfigsResponse, overridesResponse] = await Promise.all([
+          api.get<ScaleTeamConfig[]>(`/scales/${scaleMonthId}/teams`),
+          api.get<ScaleCellOverride[]>(`/scales/${scaleMonthId}/overrides`),
+        ]);
 
         if (!active) {
           return;
         }
 
-        setTeamConfigs(response.data);
-        setTeamForms(buildTeamForms(response.data));
+        setTeamConfigs(teamConfigsResponse.data);
+        setCellOverrides(overridesResponse.data);
+        setTeamForms(buildTeamForms(teamConfigsResponse.data));
         setTeamMessages(createEmptyTeamMessages());
       } catch {
         if (!active) {
@@ -192,8 +233,9 @@ export function Scales() {
         }
 
         setTeamConfigs([]);
+        setCellOverrides([]);
         setTeamForms(createEmptyTeamForms());
-        setErrorMessage("Nao foi possivel carregar as equipes da escala.");
+        setErrorMessage("Nao foi possivel carregar os dados da escala.");
       } finally {
         if (active) {
           setLoadingTeams(false);
@@ -201,7 +243,7 @@ export function Scales() {
       }
     }
 
-    void loadTeamConfigs();
+    void loadScaleMonthData();
 
     return () => {
       active = false;
@@ -223,6 +265,7 @@ export function Scales() {
       setMonth(response.data.month);
       setYear(response.data.year);
       setTeamConfigs([]);
+      setCellOverrides([]);
       setTeamForms(createEmptyTeamForms());
       setTeamMessages(createEmptyTeamMessages());
       setSuccessMessage("Escala gerada com sucesso.");
@@ -247,7 +290,12 @@ export function Scales() {
         return;
       }
 
-      setErrorMessage(getApiMessage(error, "Nao foi possivel gerar a escala. Verifique se o mes ja existe ou tente novamente."));
+      setErrorMessage(
+        getApiMessage(
+          error,
+          "Nao foi possivel gerar a escala. Verifique se o mes ja existe ou tente novamente."
+        )
+      );
       setSuccessMessage(null);
     } finally {
       setSubmitting(false);
@@ -276,8 +324,10 @@ export function Scales() {
         currentScaleMonths.filter((scaleMonth) => scaleMonth.id !== selectedScaleMonth.id)
       );
       setTeamConfigs([]);
+      setCellOverrides([]);
       setTeamForms(createEmptyTeamForms());
       setTeamMessages(createEmptyTeamMessages());
+      setActiveOverrideCell(null);
       setSuccessMessage("Escala excluida com sucesso.");
     } catch (error) {
       setErrorMessage(getApiMessage(error, "Nao foi possivel excluir a escala."));
@@ -313,6 +363,106 @@ export function Scales() {
       ...currentMessages,
       [teamName]: message,
     }));
+  }
+
+  function handleOpenOverrideModal(cell: ScaleCellClickData) {
+    setActiveOverrideCell({
+      teamName: cell.teamName,
+      personKey: cell.personKey,
+      personName: cell.personName,
+      day: cell.day,
+      value: cell.value,
+      override: cell.override,
+    });
+    setOverrideValue(cell.override?.value || cell.value);
+    setOverrideErrorMessage(null);
+  }
+
+  function handleCloseOverrideModal() {
+    if (savingOverride || removingOverride) {
+      return;
+    }
+
+    setActiveOverrideCell(null);
+    setOverrideErrorMessage(null);
+  }
+
+  async function handleSaveOverride() {
+    if (!selectedScaleMonth || !activeOverrideCell) {
+      return;
+    }
+
+    const payload = {
+      teamName: activeOverrideCell.teamName,
+      personKey: activeOverrideCell.personKey,
+      day: activeOverrideCell.day,
+      value: overrideValue,
+    };
+
+    try {
+      setSavingOverride(true);
+      setOverrideErrorMessage(null);
+      setErrorMessage(null);
+      setSuccessMessage(null);
+
+      const response = activeOverrideCell.override
+        ? await api.put<ScaleCellOverride>(
+            `/scales/overrides/${activeOverrideCell.override.id}`,
+            { value: overrideValue }
+          )
+        : await api.post<ScaleCellOverride>(
+            `/scales/${selectedScaleMonth.id}/overrides`,
+            payload
+          );
+
+      const savedOverride = response.data;
+
+      setCellOverrides((currentOverrides) => {
+        const existingIndex = currentOverrides.findIndex(
+          (override) => override.id === savedOverride.id
+        );
+
+        if (existingIndex >= 0) {
+          return currentOverrides.map((override) =>
+            override.id === savedOverride.id ? savedOverride : override
+          );
+        }
+
+        return [...currentOverrides, savedOverride];
+      });
+
+      setSuccessMessage("Override de celula salvo com sucesso.");
+      setActiveOverrideCell(null);
+    } catch (error) {
+      setOverrideErrorMessage(getApiMessage(error, "Nao foi possivel salvar o override."));
+    } finally {
+      setSavingOverride(false);
+    }
+  }
+
+  async function handleRemoveOverride() {
+    if (!activeOverrideCell?.override) {
+      return;
+    }
+
+    try {
+      setRemovingOverride(true);
+      setOverrideErrorMessage(null);
+      setErrorMessage(null);
+      setSuccessMessage(null);
+
+      await api.delete(`/scales/overrides/${activeOverrideCell.override.id}`);
+
+      setCellOverrides((currentOverrides) =>
+        currentOverrides.filter((override) => override.id !== activeOverrideCell.override?.id)
+      );
+      setSuccessMessage("Override removido com sucesso.");
+      setActiveOverrideCell(null);
+    } catch (error) {
+      setOverrideErrorMessage(getApiMessage(error, "Nao foi possivel remover o override."));
+    } finally {
+      setRemovingOverride(false);
+    }
   }
 
   async function handleSaveTeam(teamName: TeamName) {
@@ -401,7 +551,7 @@ export function Scales() {
           Escalas mensais
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Configure as equipes do mes e visualize a escala pelo modelo Excel.
+          Configure as equipes do mes, aplique overrides por celula e visualize a escala pelo modelo Excel.
         </p>
       </div>
 
@@ -410,10 +560,7 @@ export function Scales() {
 
       <section className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-900/40 md:grid-cols-[1fr_1fr_auto_auto] md:items-end">
         <div className="space-y-1">
-          <label
-            htmlFor="scale-month"
-            className="text-sm font-medium text-slate-900 dark:text-slate-100"
-          >
+          <label htmlFor="scale-month" className="text-sm font-medium text-slate-900 dark:text-slate-100">
             Mes
           </label>
           <select
@@ -435,10 +582,7 @@ export function Scales() {
         </div>
 
         <div className="space-y-1">
-          <label
-            htmlFor="scale-year"
-            className="text-sm font-medium text-slate-900 dark:text-slate-100"
-          >
+          <label htmlFor="scale-year" className="text-sm font-medium text-slate-900 dark:text-slate-100">
             Ano
           </label>
           <input
@@ -503,16 +647,11 @@ export function Scales() {
               <div className="grid gap-4 xl:grid-cols-2">
                 {teamNames.map((teamName) => {
                   const form = teamForms[teamName];
-                  const existingConfig = teamConfigs.find(
-                    (config) => config.teamName === teamName
-                  );
+                  const existingConfig = teamConfigs.find((config) => config.teamName === teamName);
                   const teamMessage = teamMessages[teamName];
 
                   return (
-                    <article
-                      key={teamName}
-                      className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800"
-                    >
+                    <article key={teamName} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -531,42 +670,30 @@ export function Scales() {
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                          Supervisor
-                        </label>
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Supervisor</label>
                         <input
                           type="text"
                           value={form.supervisorName}
-                          onChange={(event) =>
-                            updateTeamForm(teamName, "supervisorName", event.target.value)
-                          }
+                          onChange={(event) => updateTeamForm(teamName, "supervisorName", event.target.value)}
                           className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
                         />
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                          Radio operador
-                        </label>
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Radio operador</label>
                         <input
                           type="text"
                           value={form.radioOperatorName}
-                          onChange={(event) =>
-                            updateTeamForm(teamName, "radioOperatorName", event.target.value)
-                          }
+                          onChange={(event) => updateTeamForm(teamName, "radioOperatorName", event.target.value)}
                           className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
                         />
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                          Integrantes
-                        </label>
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Integrantes</label>
                         <textarea
                           value={form.members}
-                          onChange={(event) =>
-                            updateTeamForm(teamName, "members", event.target.value)
-                          }
+                          onChange={(event) => updateTeamForm(teamName, "members", event.target.value)}
                           rows={4}
                           placeholder="Separe os nomes por virgula ou por linha"
                           className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
@@ -574,14 +701,10 @@ export function Scales() {
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                          Ciclo inicial
-                        </label>
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Ciclo inicial</label>
                         <select
                           value={form.initialCycle}
-                          onChange={(event) =>
-                            updateTeamForm(teamName, "initialCycle", event.target.value)
-                          }
+                          onChange={(event) => updateTeamForm(teamName, "initialCycle", event.target.value)}
                           className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
                         >
                           {initialCycleOptions.map((option) => (
@@ -593,11 +716,7 @@ export function Scales() {
                       </div>
 
                       {teamMessage ? (
-                        <p
-                          className={`text-sm ${
-                            teamMessage.type === "success" ? "text-green-600" : "text-red-600"
-                          }`}
-                        >
+                        <p className={`text-sm ${teamMessage.type === "success" ? "text-green-600" : "text-red-600"}`}>
                           {teamMessage.text}
                         </p>
                       ) : null}
@@ -622,8 +741,77 @@ export function Scales() {
             month={month}
             year={year}
             loading={loadingTeams}
+            cellOverrides={cellOverrides}
+            onCellClick={selectedScaleMonth ? handleOpenOverrideModal : undefined}
           />
         </>
+      ) : null}
+
+      {activeOverrideCell ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                Editar celula da escala
+              </h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                {activeOverrideCell.personName} • Equipe {activeOverrideCell.teamName} • Dia {activeOverrideCell.day}
+              </p>
+            </div>
+
+            <div className="mt-4 space-y-1">
+              <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                Valor da celula
+              </label>
+              <select
+                value={overrideValue}
+                onChange={(event) => setOverrideValue(event.target.value as ScaleCellValue)}
+                className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+              >
+                {overrideValueOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option} = {getScaleCellLabel(option)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {overrideErrorMessage ? (
+              <p className="mt-4 text-sm text-red-600">{overrideErrorMessage}</p>
+            ) : null}
+
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void handleSaveOverride()}
+                disabled={savingOverride}
+                className="rounded-md bg-blue-600 px-4 py-2 text-white cursor-pointer transition hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {savingOverride ? "Salvando..." : "Salvar"}
+              </button>
+
+              {activeOverrideCell.override ? (
+                <button
+                  type="button"
+                  onClick={() => void handleRemoveOverride()}
+                  disabled={removingOverride}
+                  className="rounded-md bg-red-600 px-4 py-2 text-white cursor-pointer transition hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {removingOverride ? "Removendo..." : "Remover override"}
+                </button>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={handleCloseOverrideModal}
+                disabled={savingOverride || removingOverride}
+                className="rounded-md border border-slate-300 px-4 py-2 text-slate-700 cursor-pointer transition hover:bg-slate-100 disabled:opacity-60 disabled:cursor-not-allowed dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );
