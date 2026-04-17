@@ -1,4 +1,4 @@
-﻿import "dotenv/config";
+import "dotenv/config";
 import path from "path";
 import express from "express";
 import cors from "cors";
@@ -13,6 +13,7 @@ import { newsRoutes } from "./routes/news.routes";
 import approachRoutes from "./routes/approach.routes";
 import scaleRoutes from "./routes/scale.routes";
 import scaleTeamConfigRoutes from "./routes/scaleTeamConfig.routes";
+import scaleOverrideRoutes from "./routes/scaleOverride.routes";
 
 const app = express();
 const uploadsPath = path.resolve(process.cwd(), "uploads");
@@ -44,6 +45,7 @@ app.use("/news", newsRoutes);
 app.use("/approaches", approachRoutes);
 app.use("/scales", scaleRoutes);
 app.use("/scales", scaleTeamConfigRoutes);
+app.use("/scales", scaleOverrideRoutes);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
