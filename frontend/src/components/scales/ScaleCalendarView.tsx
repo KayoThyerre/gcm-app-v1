@@ -57,6 +57,14 @@ type ScaleRow = {
   initialCycle?: InitialCycle;
 };
 
+type VacationSummary = {
+  key: string;
+  teamName: string;
+  personKey: string;
+  personName: string;
+  days: number[];
+};
+
 export type ScaleCellClickData = {
   teamName: string;
   personKey: string;
@@ -110,6 +118,10 @@ function getOverrideKey(scaleMonthId: string, teamName: string, personKey: strin
     normalizeKeyPart(personKey),
     String(day),
   ].join("::");
+}
+
+function getPersonLookupKey(teamName: string, personKey: string) {
+  return [normalizeKeyPart(teamName), normalizeKeyPart(personKey)].join("::");
 }
 
 function buildCalendarDays(month: number, year: number): CalendarDay[] {
@@ -244,12 +256,58 @@ export function ScaleCalendarView({
       groups.get(row.groupTitle)?.rows.push(row);
     });
 
-    return Array.from(groups.entries()).map(([title, value]) => ({
-      title,
+    return Array.from(groups.entries()).map(([groupTitle, value]) => ({
+      title: groupTitle,
       accentClass: value.accentClass,
       rows: value.rows,
     }));
   }, [rows]);
+
+  const personNameMap = useMemo(() => {
+    return new Map(
+      rows.map((row) => [getPersonLookupKey(row.teamName, row.personKey), row.personName])
+    );
+  }, [rows]);
+
+  const vacationSummaries = useMemo(() => {
+    const grouped = new Map<string, VacationSummary>();
+
+    cellOverrides
+      .filter((override) => override.value === "VACATION")
+      .forEach((override) => {
+        const summaryKey = getPersonLookupKey(override.teamName, override.personKey);
+        const existing = grouped.get(summaryKey);
+        const personName = personNameMap.get(summaryKey) || override.personKey;
+
+        if (!existing) {
+          grouped.set(summaryKey, {
+            key: summaryKey,
+            teamName: override.teamName,
+            personKey: override.personKey,
+            personName,
+            days: [override.day],
+          });
+          return;
+        }
+
+        if (!existing.days.includes(override.day)) {
+          existing.days.push(override.day);
+        }
+      });
+
+    return Array.from(grouped.values())
+      .map((summary) => ({
+        ...summary,
+        days: [...summary.days].sort((left, right) => left - right),
+      }))
+      .sort((left, right) => {
+        if (left.teamName !== right.teamName) {
+          return left.teamName.localeCompare(right.teamName);
+        }
+
+        return left.personName.localeCompare(right.personName);
+      });
+  }, [cellOverrides, personNameMap]);
 
   const hasRows = groupedRows.length > 0;
 
@@ -397,6 +455,30 @@ export function ScaleCalendarView({
             </tbody>
           </table>
         </div>
+      ) : null}
+
+      {vacationSummaries.length > 0 ? (
+        <section className="rounded-lg border border-cyan-200 bg-cyan-50/70 p-4 dark:border-cyan-900/70 dark:bg-cyan-950/20">
+          <div className="space-y-1">
+            <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Ferias</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Pessoas que estão de férias:
+            </p>
+          </div>
+
+          <div className="mt-4 space-y-2">
+            {vacationSummaries.map((summary) => (
+              <div
+                key={summary.key}
+                className="rounded-md border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              >
+                <span className="font-medium text-slate-900 dark:text-slate-100">{summary.personName}</span>
+                <span className="text-slate-500 dark:text-slate-400"> | Equipe {summary.teamName} | dias: </span>
+                <span className="font-medium text-cyan-700 dark:text-cyan-300">{summary.days.join(", ")}</span>
+              </div>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-8">

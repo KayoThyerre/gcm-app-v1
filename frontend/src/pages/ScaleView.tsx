@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ScaleCalendarView,
+  type ScaleCellOverride,
   type ScaleTeamConfig,
 } from "../components/scales/ScaleCalendarView";
 import { api } from "../services/api";
@@ -45,8 +46,9 @@ export function ScaleView() {
   const [scaleMonths, setScaleMonths] = useState<ScaleMonth[]>([]);
   const [selectedScaleMonthId, setSelectedScaleMonthId] = useState("");
   const [teamConfigs, setTeamConfigs] = useState<ScaleTeamConfig[]>([]);
+  const [cellOverrides, setCellOverrides] = useState<ScaleCellOverride[]>([]);
   const [loadingMonths, setLoadingMonths] = useState(true);
-  const [loadingTeams, setLoadingTeams] = useState(false);
+  const [loadingScaleData, setLoadingScaleData] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const selectedScaleMonth = useMemo(() => {
@@ -89,38 +91,47 @@ export function ScaleView() {
   useEffect(() => {
     if (!selectedScaleMonthId) {
       setTeamConfigs([]);
-      setLoadingTeams(false);
+      setCellOverrides([]);
+      setLoadingScaleData(false);
       return;
     }
 
     let active = true;
 
-    async function loadTeamConfigs() {
+    async function loadScaleData() {
       try {
-        setLoadingTeams(true);
+        setLoadingScaleData(true);
         setErrorMessage(null);
-        const response = await api.get<ScaleTeamConfig[]>(`/scales/${selectedScaleMonthId}/teams`);
+
+        const [teamConfigsResponse, overridesResponse] = await Promise.all([
+          api.get<ScaleTeamConfig[]>(`/scales/${selectedScaleMonthId}/teams`),
+          api.get<ScaleCellOverride[]>(`/scales/${selectedScaleMonthId}/overrides`),
+        ]);
 
         if (!active) {
           return;
         }
 
-        setTeamConfigs(response.data);
+        setTeamConfigs(teamConfigsResponse.data);
+        setCellOverrides(overridesResponse.data);
       } catch (error) {
         if (!active) {
           return;
         }
 
         setTeamConfigs([]);
-        setErrorMessage(getApiMessage(error, "Nao foi possivel carregar as equipes da escala selecionada."));
+        setCellOverrides([]);
+        setErrorMessage(
+          getApiMessage(error, "Nao foi possivel carregar os dados da escala selecionada.")
+        );
       } finally {
         if (active) {
-          setLoadingTeams(false);
+          setLoadingScaleData(false);
         }
       }
     }
 
-    void loadTeamConfigs();
+    void loadScaleData();
 
     return () => {
       active = false;
@@ -134,7 +145,7 @@ export function ScaleView() {
           Escala Mensal de Servico
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Consulta de escalas em modo leitura, pronta para futura exportacao.
+          Consulta de escalas em modo leitura, separada da administracao do modulo.
         </p>
       </div>
 
@@ -198,9 +209,10 @@ export function ScaleView() {
           teamConfigs={teamConfigs}
           month={selectedScaleMonth.month}
           year={selectedScaleMonth.year}
-          loading={loadingTeams}
+          loading={loadingScaleData}
+          cellOverrides={cellOverrides}
           title="Escala Mensal de Servico"
-          subtitle="Visualizacao em modo leitura para consulta interna das equipes e radios operadores."
+          subtitle="Visualizacao em modo leitura para consulta interna das equipes, radios operadores e ferias."
           selectedLabel={selectedLabel}
           emptyTeamsMessage="Nenhuma equipe configurada para a escala selecionada."
         />

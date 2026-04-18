@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ScaleCalendarView,
   getScaleCellLabel,
@@ -8,6 +8,7 @@ import {
   type ScaleCellValue,
   type ScaleTeamConfig,
 } from "../components/scales/ScaleCalendarView";
+import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
 
 type ScaleMonth = {
@@ -52,6 +53,12 @@ type OverrideModalState = {
   day: number;
   value: ScaleCellValue;
   override: ScaleCellOverride | null;
+};
+
+type VacationPersonOption = {
+  label: string;
+  personKey: string;
+  personName: string;
 };
 
 const monthOptions = [
@@ -124,6 +131,66 @@ function buildTeamForms(teamConfigs: ScaleTeamConfig[]) {
   return nextForms;
 }
 
+function getDaysInMonth(month: number, year: number) {
+  return new Date(year, month, 0).getDate();
+}
+
+function buildVacationPersonOptions(teamConfigs: ScaleTeamConfig[], teamName: TeamName) {
+  const teamConfig = teamConfigs.find((config) => config.teamName === teamName);
+
+  if (!teamConfig) {
+    return [] as VacationPersonOption[];
+  }
+
+  const options: VacationPersonOption[] = [];
+
+  if (teamConfig.supervisorName) {
+    options.push({
+      label: `Supervisor - ${teamConfig.supervisorName}`,
+      personKey: `supervisor-${teamConfig.teamName}`,
+      personName: teamConfig.supervisorName,
+    });
+  }
+
+  teamConfig.members.forEach((member) => {
+    options.push({
+      label: `Integrante - ${member.name}`,
+      personKey: `member-${member.id}`,
+      personName: member.name,
+    });
+  });
+
+  if (teamConfig.radioOperatorName) {
+    options.push({
+      label: `Radio - ${teamConfig.radioOperatorName}`,
+      personKey: `radio-${teamConfig.teamName}`,
+      personName: teamConfig.radioOperatorName,
+    });
+  }
+
+  return options;
+}
+
+function mergeSavedOverrides(
+  currentOverrides: ScaleCellOverride[],
+  savedOverrides: ScaleCellOverride[]
+) {
+  const nextOverrides = [...currentOverrides];
+
+  savedOverrides.forEach((savedOverride) => {
+    const existingIndex = nextOverrides.findIndex((override) => override.id === savedOverride.id);
+
+    if (existingIndex >= 0) {
+      nextOverrides[existingIndex] = savedOverride;
+      return;
+    }
+
+    nextOverrides.push(savedOverride);
+  });
+
+  return nextOverrides;
+}
+
 function isDuplicateScaleMonthError(error: unknown) {
   const maybeError = error as ApiErrorLike;
   const status = maybeError.response?.status;
@@ -138,6 +205,7 @@ function getApiMessage(error: unknown, fallback: string) {
 }
 
 export function Scales() {
+  const { user } = useAuth();
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
@@ -157,9 +225,21 @@ export function Scales() {
   const [savingOverride, setSavingOverride] = useState(false);
   const [removingOverride, setRemovingOverride] = useState(false);
   const [overrideErrorMessage, setOverrideErrorMessage] = useState<string | null>(null);
+  const [vacationTeamName, setVacationTeamName] = useState<TeamName>("A");
+  const [vacationPersonKey, setVacationPersonKey] = useState("");
+  const [vacationStartDay, setVacationStartDay] = useState("");
+  const [vacationEndDay, setVacationEndDay] = useState("");
+  const [vacationSubmitting, setVacationSubmitting] = useState(false);
+  const [vacationMessage, setVacationMessage] = useState<TeamMessage | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const canManageVacation = user?.role === "ADMIN" || user?.role === "DEV";
+  const daysInSelectedMonth = useMemo(() => getDaysInMonth(month, year), [month, year]);
+  const vacationPersonOptions = useMemo(
+    () => buildVacationPersonOptions(teamConfigs, vacationTeamName),
+    [teamConfigs, vacationTeamName]
+  );
 
   async function loadScaleMonths() {
     const response = await api.get<ScaleMonth[]>("/scales/months");
@@ -203,6 +283,8 @@ export function Scales() {
       setTeamMessages(createEmptyTeamMessages());
       setActiveOverrideCell(null);
       setOverrideErrorMessage(null);
+      setVacationMessage(null);
+      setVacationPersonKey("");
       setLoadingTeams(false);
       return;
     }
@@ -214,6 +296,7 @@ export function Scales() {
       try {
         setLoadingTeams(true);
         setOverrideErrorMessage(null);
+        setVacationMessage(null);
         const [teamConfigsResponse, overridesResponse] = await Promise.all([
           api.get<ScaleTeamConfig[]>(`/scales/${scaleMonthId}/teams`),
           api.get<ScaleCellOverride[]>(`/scales/${scaleMonthId}/overrides`),
@@ -249,6 +332,13 @@ export function Scales() {
       active = false;
     };
   }, [selectedScaleMonth?.id]);
+
+
+  useEffect(() => {
+    if (!vacationPersonOptions.some((option) => option.personKey === vacationPersonKey)) {
+      setVacationPersonKey("");
+    }
+  }, [vacationPersonKey, vacationPersonOptions]);
 
   async function handleGenerateScale() {
     try {
@@ -328,6 +418,7 @@ export function Scales() {
       setTeamForms(createEmptyTeamForms());
       setTeamMessages(createEmptyTeamMessages());
       setActiveOverrideCell(null);
+      setVacationMessage(null);
       setSuccessMessage("Escala excluida com sucesso.");
     } catch (error) {
       setErrorMessage(getApiMessage(error, "Nao foi possivel excluir a escala."));
@@ -417,19 +508,7 @@ export function Scales() {
 
       const savedOverride = response.data;
 
-      setCellOverrides((currentOverrides) => {
-        const existingIndex = currentOverrides.findIndex(
-          (override) => override.id === savedOverride.id
-        );
-
-        if (existingIndex >= 0) {
-          return currentOverrides.map((override) =>
-            override.id === savedOverride.id ? savedOverride : override
-          );
-        }
-
-        return [...currentOverrides, savedOverride];
-      });
+      setCellOverrides((currentOverrides) => mergeSavedOverrides(currentOverrides, [savedOverride]));
 
       setSuccessMessage("Override de celula salvo com sucesso.");
       setActiveOverrideCell(null);
@@ -462,6 +541,100 @@ export function Scales() {
       setOverrideErrorMessage(getApiMessage(error, "Nao foi possivel remover o override."));
     } finally {
       setRemovingOverride(false);
+    }
+  }
+
+  async function handleLaunchVacation() {
+    if (!selectedScaleMonth) {
+      setVacationMessage({
+        type: "error",
+        text: "Selecione ou gere uma escala antes de lancar ferias.",
+      });
+      return;
+    }
+
+    if (!vacationTeamName) {
+      setVacationMessage({
+        type: "error",
+        text: "Selecione a equipe.",
+      });
+      return;
+    }
+
+    if (!vacationPersonKey) {
+      setVacationMessage({
+        type: "error",
+        text: "Selecione a pessoa.",
+      });
+      return;
+    }
+
+    const startDay = Number(vacationStartDay);
+    const endDay = Number(vacationEndDay);
+
+    if (!startDay || !Number.isInteger(startDay)) {
+      setVacationMessage({
+        type: "error",
+        text: "Informe um dia inicial valido.",
+      });
+      return;
+    }
+
+    if (!endDay || !Number.isInteger(endDay)) {
+      setVacationMessage({
+        type: "error",
+        text: "Informe um dia final valido.",
+      });
+      return;
+    }
+
+    if (endDay < startDay) {
+      setVacationMessage({
+        type: "error",
+        text: "O dia final deve ser maior ou igual ao dia inicial.",
+      });
+      return;
+    }
+
+    if (startDay < 1 || endDay > daysInSelectedMonth) {
+      setVacationMessage({
+        type: "error",
+        text: `Os dias devem ficar entre 1 e ${daysInSelectedMonth}.`,
+      });
+      return;
+    }
+
+    try {
+      setVacationSubmitting(true);
+      setVacationMessage(null);
+      setErrorMessage(null);
+      setSuccessMessage(null);
+
+      const days = Array.from({ length: endDay - startDay + 1 }, (_, index) => startDay + index);
+      const responses = await Promise.all(
+        days.map((day) =>
+          api.post<ScaleCellOverride>(`/scales/${selectedScaleMonth.id}/overrides`, {
+            teamName: vacationTeamName,
+            personKey: vacationPersonKey,
+            day,
+            value: "VACATION",
+          })
+        )
+      );
+
+      const savedOverrides = responses.map((response) => response.data);
+      setCellOverrides((currentOverrides) => mergeSavedOverrides(currentOverrides, savedOverrides));
+      setVacationMessage({
+        type: "success",
+        text: "Ferias lancadas com sucesso.",
+      });
+    } catch (error) {
+      setVacationMessage({
+        type: "error",
+        text: getApiMessage(error, "Nao foi possivel lancar as ferias."),
+      });
+    } finally {
+      setVacationSubmitting(false);
     }
   }
 
@@ -704,7 +877,7 @@ export function Scales() {
                         <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Ciclo inicial</label>
                         <select
                           value={form.initialCycle}
-                          onChange={(event) => updateTeamForm(teamName, "initialCycle", event.target.value)}
+                          onChange={(event) => updateTeamForm(teamName, "initialCycle", event.target.value as InitialCycle)}
                           className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
                         >
                           {initialCycleOptions.map((option) => (
@@ -733,6 +906,110 @@ export function Scales() {
                   );
                 })}
               </div>
+            </section>
+          ) : null}
+
+          {selectedScaleMonth && canManageVacation ? (
+            <section className="space-y-5 rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-900/40">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                  Lancar ferias
+                </h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Marque ferias em lote usando os overrides atuais do calendario.
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Equipe</label>
+                  <select
+                    value={vacationTeamName}
+                    onChange={(event) => {
+                      setVacationTeamName(event.target.value as TeamName);
+                      setVacationPersonKey("");
+                      setVacationMessage(null);
+                    }}
+                    className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                  >
+                    {teamNames.map((teamName) => (
+                      <option key={teamName} value={teamName}>
+                        Equipe {teamName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Pessoa</label>
+                  <select
+                    value={vacationPersonKey}
+                    onChange={(event) => {
+                      setVacationPersonKey(event.target.value);
+                      setVacationMessage(null);
+                    }}
+                    className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                  >
+                    <option value="">Selecione uma pessoa</option>
+                    {vacationPersonOptions.map((option) => (
+                      <option key={option.personKey} value={option.personKey}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Dia inicial</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={daysInSelectedMonth}
+                    value={vacationStartDay}
+                    onChange={(event) => {
+                      setVacationStartDay(event.target.value);
+                      setVacationMessage(null);
+                    }}
+                    className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Dia final</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={daysInSelectedMonth}
+                    value={vacationEndDay}
+                    onChange={(event) => {
+                      setVacationEndDay(event.target.value);
+                      setVacationMessage(null);
+                    }}
+                    className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                  />
+                </div>
+              </div>
+
+              {vacationPersonOptions.length === 0 ? (
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Essa equipe ainda nao possui pessoas configuradas para receber ferias.
+                </p>
+              ) : null}
+
+              {vacationMessage ? (
+                <p className={`text-sm ${vacationMessage.type === "success" ? "text-green-600" : "text-red-600"}`}>
+                  {vacationMessage.text}
+                </p>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={() => void handleLaunchVacation()}
+                disabled={vacationSubmitting || loadingTeams || vacationPersonOptions.length === 0}
+                className="rounded-md bg-blue-600 px-4 py-2 text-white cursor-pointer transition hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {vacationSubmitting ? "Lancando..." : "Salvar ferias"}
+              </button>
             </section>
           ) : null}
 
