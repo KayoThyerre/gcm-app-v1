@@ -312,7 +312,10 @@ export function ScaleCalendarView({
   const hasRows = groupedRows.length > 0;
 
   return (
-    <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <section
+      data-scale-calendar-root="true"
+      className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+    >
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="flex flex-col gap-1">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
@@ -335,8 +338,11 @@ export function ScaleCalendarView({
       ) : null}
 
       {hasRows ? (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-          <table className="min-w-[1850px] border-collapse text-xs">
+        <div
+          data-scale-table-wrapper="true"
+          className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700"
+        >
+          <table data-scale-table="true" className="min-w-[1850px] border-collapse text-xs">
             <thead>
               <tr>
                 <th
@@ -458,7 +464,10 @@ export function ScaleCalendarView({
       ) : null}
 
       {vacationSummaries.length > 0 ? (
-        <section className="rounded-lg border border-cyan-200 bg-cyan-50/70 p-4 dark:border-cyan-900/70 dark:bg-cyan-950/20">
+        <section
+          data-scale-vacation="true"
+          className="rounded-lg border border-cyan-200 bg-cyan-50/70 p-4 dark:border-cyan-900/70 dark:bg-cyan-950/20"
+        >
           <div className="space-y-1">
             <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Ferias</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -481,7 +490,10 @@ export function ScaleCalendarView({
         </section>
       ) : null}
 
-      <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-8">
+      <div
+        data-scale-legend="true"
+        className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-8"
+      >
         <span><strong>1</strong> = 00h-06h</span>
         <span><strong>2</strong> = 06h-12h</span>
         <span><strong>3</strong> = 12h-18h</span>

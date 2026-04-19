@@ -1,6 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
+import { useEffect, useMemo, useState } from "react";
 import {
   ScaleCalendarView,
   type ScaleCellOverride,
@@ -51,10 +49,7 @@ export function ScaleView() {
   const [cellOverrides, setCellOverrides] = useState<ScaleCellOverride[]>([]);
   const [loadingMonths, setLoadingMonths] = useState(true);
   const [loadingScaleData, setLoadingScaleData] = useState(false);
-  const [exportingPdf, setExportingPdf] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [exportErrorMessage, setExportErrorMessage] = useState<string | null>(null);
-  const exportAreaRef = useRef<HTMLDivElement | null>(null);
 
   const selectedScaleMonth = useMemo(() => {
     return scaleMonths.find((scaleMonth) => scaleMonth.id === selectedScaleMonthId) || null;
@@ -143,143 +138,228 @@ export function ScaleView() {
     };
   }, [selectedScaleMonthId]);
 
-  async function handleExportPdf() {
-    console.log("PDF: inicio da exportacao");
-
-    if (!selectedScaleMonth) {
-      console.log("PDF: nenhuma escala selecionada");
-      setExportErrorMessage("Nenhuma escala selecionada para exportacao.");
-      return;
-    }
-
-    if (!exportAreaRef.current) {
-      console.log("PDF: ref da area exportavel nao encontrada");
-      setExportErrorMessage("A area da escala ainda nao esta pronta para exportacao.");
-      return;
-    }
-
-    try {
-      setExportingPdf(true);
-      setExportErrorMessage(null);
-
-      const exportElement = exportAreaRef.current;
-      const bounds = exportElement.getBoundingClientRect();
-      const childCount = exportElement.childElementCount;
-
-      console.log("PDF: ref encontrada", {
-        childCount,
-        clientWidth: exportElement.clientWidth,
-        clientHeight: exportElement.clientHeight,
-        scrollWidth: exportElement.scrollWidth,
-        scrollHeight: exportElement.scrollHeight,
-        bounds: {
-          width: bounds.width,
-          height: bounds.height,
-        },
-      });
-
-      if (!childCount || exportElement.scrollWidth === 0 || exportElement.scrollHeight === 0) {
-        throw new Error("Elemento exportavel vazio ou sem dimensoes renderizadas.");
-      }
-
-      await new Promise((resolve) => window.requestAnimationFrame(() => resolve(undefined)));
-      console.log("PDF: frame de renderizacao aguardado");
-
-      const canvas = await html2canvas(exportElement, {
-        backgroundColor: "#ffffff",
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        allowTaint: false,
-        scrollX: 0,
-        scrollY: -window.scrollY,
-        width: exportElement.scrollWidth,
-        height: exportElement.scrollHeight,
-        windowWidth: Math.max(exportElement.scrollWidth, window.innerWidth),
-        windowHeight: Math.max(exportElement.scrollHeight, window.innerHeight),
-      });
-      console.log("PDF: html2canvas concluido", {
-        width: canvas.width,
-        height: canvas.height,
-      });
-
-      if (!canvas.width || !canvas.height) {
-        throw new Error("Canvas de exportacao foi gerado sem dimensoes validas.");
-      }
-
-      const imageData = canvas.toDataURL("image/png");
-      console.log("PDF: toDataURL concluido", {
-        dataLength: imageData.length,
-      });
-
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4",
-      });
-      console.log("PDF: jsPDF instanciado");
-
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 6;
-      const imageWidth = pageWidth - margin * 2;
-      const imageHeight = (canvas.height * imageWidth) / canvas.width;
-      let remainingHeight = imageHeight;
-      let positionY = margin;
-
-      pdf.addImage(
-        imageData,
-        "PNG",
-        margin,
-        positionY,
-        imageWidth,
-        imageHeight,
-        undefined,
-        "FAST"
-      );
-      console.log("PDF: addImage concluido na primeira pagina", {
-        pageWidth,
-        pageHeight,
-        imageWidth,
-        imageHeight,
-      });
-      remainingHeight -= pageHeight - margin * 2;
-
-      while (remainingHeight > 0) {
-        positionY = margin - (imageHeight - remainingHeight);
-        pdf.addPage();
-        pdf.addImage(
-          imageData,
-          "PNG",
-          margin,
-          positionY,
-          imageWidth,
-          imageHeight,
-          undefined,
-          "FAST"
-        );
-        console.log("PDF: addImage concluido em pagina adicional", {
-          remainingHeight,
-          positionY,
-        });
-        remainingHeight -= pageHeight - margin * 2;
-      }
-
-      const formattedMonth = String(selectedScaleMonth.month).padStart(2, "0");
-      console.log("PDF: iniciando save");
-      pdf.save(`escala-${formattedMonth}-${selectedScaleMonth.year}.pdf`);
-      console.log("PDF: save concluido");
-    } catch (error) {
-      console.error("Erro ao exportar PDF da escala:", error);
-      setExportErrorMessage("Nao foi possivel exportar o PDF.");
-    } finally {
-      setExportingPdf(false);
-    }
+  function handlePrint() {
+    window.print();
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-8 space-y-8">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+    <>
+      <style>
+        {`
+          @media print {
+            @page {
+              size: A4 landscape;
+              margin: 8mm;
+            }
+
+            html,
+            body {
+              background: #ffffff !important;
+              color: #111827 !important;
+              print-color-adjust: exact;
+              -webkit-print-color-adjust: exact;
+            }
+
+            body * {
+              visibility: hidden;
+            }
+
+            [data-print-root],
+            [data-print-root] * {
+              visibility: visible;
+            }
+
+            [data-print-root] {
+              position: absolute;
+              inset: 0;
+              width: 100%;
+              max-width: none !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              background: #ffffff !important;
+              color: #111827 !important;
+              overflow: visible !important;
+            }
+
+            [data-print-hide] {
+              display: none !important;
+            }
+
+            [data-print-card] {
+              border: 0 !important;
+              box-shadow: none !important;
+              background: #ffffff !important;
+            }
+
+            [data-print-section] {
+              break-inside: avoid-page;
+              page-break-inside: avoid;
+              box-shadow: none !important;
+              background: #ffffff !important;
+              color: #111827 !important;
+              width: 114% !important;
+              max-width: none !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              overflow: visible !important;
+              transform: scale(0.88);
+              transform-origin: top left;
+            }
+
+            [data-print-section] table {
+              width: 100% !important;
+              min-width: 0 !important;
+              border-collapse: collapse !important;
+              font-size: 7px !important;
+              line-height: 1.05 !important;
+              table-layout: fixed !important;
+            }
+
+            [data-print-section] thead {
+              display: table-header-group;
+            }
+
+            [data-scale-calendar-root="true"] {
+              gap: 6px !important;
+            }
+
+            [data-scale-calendar-root="true"] > div:first-child {
+              gap: 4px !important;
+              margin-bottom: 2px !important;
+            }
+
+            [data-scale-calendar-root="true"] h2 {
+              font-size: 14px !important;
+              line-height: 1.1 !important;
+            }
+
+            [data-scale-calendar-root="true"] p,
+            [data-scale-calendar-root="true"] span {
+              font-size: 8px !important;
+              line-height: 1.1 !important;
+            }
+
+            [data-scale-table-wrapper="true"] {
+              overflow: visible !important;
+              border-width: 1px !important;
+              break-inside: avoid-page;
+              page-break-inside: avoid;
+            }
+
+            [data-scale-table="true"] tr,
+            [data-scale-table="true"] thead,
+            [data-scale-table="true"] tbody {
+              break-inside: avoid;
+              page-break-inside: avoid;
+            }
+
+            [data-print-section] tr,
+            [data-print-section] td,
+            [data-print-section] th,
+            [data-print-section] div,
+            [data-print-section] span,
+            [data-print-section] button,
+            [data-print-section] section {
+              background-image: none !important;
+              box-shadow: none !important;
+              text-shadow: none !important;
+              filter: none !important;
+              backdrop-filter: none !important;
+            }
+
+            [data-print-section] td,
+            [data-print-section] th {
+              border-color: #cbd5e1 !important;
+              color: #111827 !important;
+              padding: 1px 2px !important;
+              height: auto !important;
+              min-height: 0 !important;
+              vertical-align: middle !important;
+            }
+
+            [data-print-section] button {
+              color: inherit !important;
+              cursor: default !important;
+              min-height: 0 !important;
+              height: auto !important;
+              padding: 1px 2px !important;
+              line-height: 1 !important;
+            }
+
+            [data-print-section] .sticky {
+              position: static !important;
+            }
+
+            [data-scale-table="true"] td > div,
+            [data-scale-table="true"] td > span,
+            [data-scale-table="true"] td > button,
+            [data-scale-table="true"] th > div,
+            [data-scale-table="true"] th > span {
+              padding-top: 1px !important;
+              padding-bottom: 1px !important;
+            }
+
+            [data-scale-table="true"] tr td[colspan] > div {
+              padding: 2px 4px !important;
+              gap: 4px !important;
+            }
+
+            [data-scale-table="true"] tr td[colspan] span:first-child {
+              height: 10px !important;
+              width: 3px !important;
+            }
+
+            [data-scale-vacation="true"] {
+              break-inside: avoid-page;
+              page-break-inside: avoid;
+              padding: 6px 8px !important;
+              margin-top: 4px !important;
+            }
+
+            [data-scale-vacation="true"] > div:first-child {
+              gap: 2px !important;
+            }
+
+            [data-scale-vacation="true"] > div:last-child {
+              margin-top: 6px !important;
+              display: grid !important;
+              grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+              gap: 4px !important;
+            }
+
+            [data-scale-vacation="true"] > div:last-child > div {
+              padding: 4px 6px !important;
+              font-size: 7px !important;
+              line-height: 1.15 !important;
+            }
+
+            [data-scale-legend="true"] {
+              display: flex !important;
+              flex-wrap: nowrap !important;
+              gap: 6px !important;
+              padding: 6px 8px !important;
+              margin-top: 4px !important;
+              font-size: 7px !important;
+              line-height: 1.1 !important;
+              white-space: nowrap !important;
+              break-inside: avoid-page;
+              page-break-inside: avoid;
+            }
+
+            [data-scale-legend="true"] > span {
+              display: inline !important;
+              white-space: nowrap !important;
+            }
+
+            [data-scale-legend="true"] > span:not(:last-child)::after {
+              content: " |";
+            }
+          }
+        `}
+      </style>
+
+      <div data-print-root className="max-w-7xl mx-auto p-8 space-y-8">
+      <div data-print-hide className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
             Escala Mensal de Servico
@@ -291,18 +371,21 @@ export function ScaleView() {
 
         <button
           type="button"
-          onClick={() => void handleExportPdf()}
-          disabled={!selectedScaleMonth || loadingScaleData || exportingPdf}
+          onClick={handlePrint}
+          disabled={!selectedScaleMonth || loadingScaleData}
           className="rounded-md bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {exportingPdf ? "Exportando..." : "Exportar PDF"}
+          Imprimir / Salvar PDF
         </button>
       </div>
 
-      {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
-      {exportErrorMessage ? <p className="text-sm text-red-600">{exportErrorMessage}</p> : null}
+      <div data-print-hide className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+        Use a opcao Salvar como PDF no dialogo de impressao do navegador.
+      </div>
 
-      <section className="rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-900/40">
+      {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
+
+      <section data-print-hide className="rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-900/40">
         <div className="grid gap-4 md:grid-cols-[minmax(0,320px)_1fr] md:items-end">
           <div className="space-y-1">
             <label
@@ -356,7 +439,7 @@ export function ScaleView() {
       ) : null}
 
       {!loadingMonths && selectedScaleMonth ? (
-        <div ref={exportAreaRef} className="rounded-xl bg-white">
+        <div data-print-section data-print-card className="rounded-xl bg-white">
           <ScaleCalendarView
             teamConfigs={teamConfigs}
             month={selectedScaleMonth.month}
@@ -370,6 +453,7 @@ export function ScaleView() {
           />
         </div>
       ) : null}
-    </div>
+      </div>
+    </>
   );
 }
