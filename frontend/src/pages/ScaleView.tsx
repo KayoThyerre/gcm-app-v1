@@ -144,12 +144,16 @@ export function ScaleView() {
   }, [selectedScaleMonthId]);
 
   async function handleExportPdf() {
+    console.log("PDF: inicio da exportacao");
+
     if (!selectedScaleMonth) {
+      console.log("PDF: nenhuma escala selecionada");
       setExportErrorMessage("Nenhuma escala selecionada para exportacao.");
       return;
     }
 
     if (!exportAreaRef.current) {
+      console.log("PDF: ref da area exportavel nao encontrada");
       setExportErrorMessage("A area da escala ainda nao esta pronta para exportacao.");
       return;
     }
@@ -159,7 +163,27 @@ export function ScaleView() {
       setExportErrorMessage(null);
 
       const exportElement = exportAreaRef.current;
+      const bounds = exportElement.getBoundingClientRect();
+      const childCount = exportElement.childElementCount;
+
+      console.log("PDF: ref encontrada", {
+        childCount,
+        clientWidth: exportElement.clientWidth,
+        clientHeight: exportElement.clientHeight,
+        scrollWidth: exportElement.scrollWidth,
+        scrollHeight: exportElement.scrollHeight,
+        bounds: {
+          width: bounds.width,
+          height: bounds.height,
+        },
+      });
+
+      if (!childCount || exportElement.scrollWidth === 0 || exportElement.scrollHeight === 0) {
+        throw new Error("Elemento exportavel vazio ou sem dimensoes renderizadas.");
+      }
+
       await new Promise((resolve) => window.requestAnimationFrame(() => resolve(undefined)));
+      console.log("PDF: frame de renderizacao aguardado");
 
       const canvas = await html2canvas(exportElement, {
         backgroundColor: "#ffffff",
@@ -174,37 +198,77 @@ export function ScaleView() {
         windowWidth: Math.max(exportElement.scrollWidth, window.innerWidth),
         windowHeight: Math.max(exportElement.scrollHeight, window.innerHeight),
       });
+      console.log("PDF: html2canvas concluido", {
+        width: canvas.width,
+        height: canvas.height,
+      });
 
       if (!canvas.width || !canvas.height) {
         throw new Error("Canvas de exportacao foi gerado sem dimensoes validas.");
       }
 
       const imageData = canvas.toDataURL("image/png");
+      console.log("PDF: toDataURL concluido", {
+        dataLength: imageData.length,
+      });
+
       const pdf = new jsPDF({
-        orientation: canvas.width > canvas.height ? "landscape" : "portrait",
+        orientation: "landscape",
         unit: "mm",
         format: "a4",
       });
+      console.log("PDF: jsPDF instanciado");
 
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const imageWidth = pageWidth;
+      const margin = 6;
+      const imageWidth = pageWidth - margin * 2;
       const imageHeight = (canvas.height * imageWidth) / canvas.width;
       let remainingHeight = imageHeight;
-      let positionY = 0;
+      let positionY = margin;
 
-      pdf.addImage(imageData, "PNG", 0, positionY, imageWidth, imageHeight, undefined, "FAST");
-      remainingHeight -= pageHeight;
+      pdf.addImage(
+        imageData,
+        "PNG",
+        margin,
+        positionY,
+        imageWidth,
+        imageHeight,
+        undefined,
+        "FAST"
+      );
+      console.log("PDF: addImage concluido na primeira pagina", {
+        pageWidth,
+        pageHeight,
+        imageWidth,
+        imageHeight,
+      });
+      remainingHeight -= pageHeight - margin * 2;
 
       while (remainingHeight > 0) {
-        positionY = remainingHeight - imageHeight;
+        positionY = margin - (imageHeight - remainingHeight);
         pdf.addPage();
-        pdf.addImage(imageData, "PNG", 0, positionY, imageWidth, imageHeight, undefined, "FAST");
-        remainingHeight -= pageHeight;
+        pdf.addImage(
+          imageData,
+          "PNG",
+          margin,
+          positionY,
+          imageWidth,
+          imageHeight,
+          undefined,
+          "FAST"
+        );
+        console.log("PDF: addImage concluido em pagina adicional", {
+          remainingHeight,
+          positionY,
+        });
+        remainingHeight -= pageHeight - margin * 2;
       }
 
       const formattedMonth = String(selectedScaleMonth.month).padStart(2, "0");
+      console.log("PDF: iniciando save");
       pdf.save(`escala-${formattedMonth}-${selectedScaleMonth.year}.pdf`);
+      console.log("PDF: save concluido");
     } catch (error) {
       console.error("Erro ao exportar PDF da escala:", error);
       setExportErrorMessage("Nao foi possivel exportar o PDF.");
