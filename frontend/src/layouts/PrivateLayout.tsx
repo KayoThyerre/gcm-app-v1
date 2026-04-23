@@ -273,8 +273,8 @@ export function PrivateLayout() {
             </nav>
           </aside>
 
-          <main className="flex-1 p-3 sm:p-6">
-            <div className="max-w-7xl mx-auto">
+          <main className="min-w-0 flex-1 p-3 sm:p-6">
+            <div className="mx-auto min-w-0 max-w-7xl">
               <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl shadow-blue-900/5 dark:shadow-black/40 border border-blue-200/40 dark:border-slate-700 p-3 h-full sm:p-6">
                 <Outlet />
               </div>
