@@ -718,7 +718,7 @@ export function Scales() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-8 space-y-8">
+    <div className="max-w-7xl mx-auto p-4 space-y-8 sm:p-8">
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
           Escalas mensais
@@ -731,7 +731,7 @@ export function Scales() {
       {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
       {successMessage ? <p className="text-sm text-green-600">{successMessage}</p> : null}
 
-      <section className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-900/40 md:grid-cols-[1fr_1fr_auto_auto] md:items-end">
+      <section className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/40 sm:p-5 md:grid-cols-[1fr_1fr_auto_auto] md:items-end">
         <div className="space-y-1">
           <label htmlFor="scale-month" className="text-sm font-medium text-slate-900 dark:text-slate-100">
             Mes
@@ -795,7 +795,7 @@ export function Scales() {
       {!loading ? (
         <>
           {!selectedScaleMonth ? (
-            <section className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-800">
+            <section className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-center dark:border-slate-700 dark:bg-slate-800 sm:p-8">
               <p className="text-slate-600 dark:text-slate-300">
                 Gere ou selecione uma escala para configurar as equipes.
               </p>
@@ -803,7 +803,7 @@ export function Scales() {
           ) : null}
 
           {selectedScaleMonth ? (
-            <section className="space-y-5 rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-900/40">
+            <section className="space-y-5 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/40 sm:p-5">
               <div className="space-y-1">
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                   Configuracao das equipes
@@ -824,7 +824,7 @@ export function Scales() {
                   const teamMessage = teamMessages[teamName];
 
                   return (
-                    <article key={teamName} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
+                    <article key={teamName} className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -910,7 +910,7 @@ export function Scales() {
           ) : null}
 
           {selectedScaleMonth && canManageVacation ? (
-            <section className="space-y-5 rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-900/40">
+            <section className="space-y-5 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/40 sm:p-5">
               <div className="space-y-1">
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                   Lancar ferias
@@ -1026,7 +1026,7 @@ export function Scales() {
 
       {activeOverrideCell ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-slate-900 sm:p-6">
             <div className="space-y-1">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 Editar celula da escala

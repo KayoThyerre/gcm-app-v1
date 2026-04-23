@@ -112,7 +112,7 @@ export function AdminUsers() {
   return (
     <RequireRole allowedRoles={["ADMIN"]}>
       <>
-        <div className="max-w-5xl mx-auto p-8 space-y-10">
+        <div className="max-w-5xl mx-auto p-4 space-y-10 sm:p-8">
           <div>
             <input
               type="text"
@@ -138,7 +138,70 @@ export function AdminUsers() {
             ) : null}
 
             {!loading && pendingUsers.length > 0 ? (
-              <div className="w-full border rounded overflow-visible">
+              <div className="block space-y-3 sm:hidden">
+                {pendingUsers.map((user) => (
+                  <article
+                    key={user.id}
+                    className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+                  >
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                          {user.name}
+                        </p>
+                        <p className="break-words text-sm text-slate-600 dark:text-slate-400">
+                          {user.email}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            Role
+                          </p>
+                          <p className="font-medium text-slate-900 dark:text-slate-100">
+                            {user.role}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            Status
+                          </p>
+                          <p className="font-medium text-amber-600">Pendente</p>
+                        </div>
+                      </div>
+
+                      <div className="text-sm text-slate-600 dark:text-slate-400">
+                        Criado em {new Date(user.createdAt).toLocaleDateString("pt-BR")}
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleApprove(user.id)}
+                          disabled={processingUserId === user.id}
+                          className="rounded bg-green-500 px-3 py-2 text-white cursor-pointer transition hover:bg-green-600 disabled:opacity-60"
+                        >
+                          Aprovar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleReject(user.id)}
+                          disabled={processingUserId === user.id}
+                          className="rounded bg-red-500 px-3 py-2 text-white cursor-pointer transition hover:bg-red-600 disabled:opacity-60"
+                        >
+                          Recusar
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : null}
+
+            {!loading && pendingUsers.length > 0 ? (
+              <div className="hidden w-full border rounded overflow-visible sm:block">
                 <table className="w-full text-slate-900 dark:text-slate-100">
                   <thead className="bg-slate-100 dark:bg-slate-900">
                     <tr className="text-slate-700 dark:text-slate-200">
@@ -199,7 +262,68 @@ export function AdminUsers() {
             ) : null}
 
             {!loading && activeUsers.length > 0 ? (
-              <div className="w-full border rounded overflow-visible">
+              <div className="block space-y-3 sm:hidden">
+                {activeUsers.map((user) => (
+                  <article
+                    key={user.id}
+                    className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+                  >
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                          {user.name}
+                        </p>
+                        <p className="break-words text-sm text-slate-600 dark:text-slate-400">
+                          {user.email}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            Role
+                          </p>
+                          <p className="font-medium text-slate-900 dark:text-slate-100">
+                            {user.role}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            Status
+                          </p>
+                          <p className="font-medium text-green-600">Ativo</p>
+                        </div>
+                      </div>
+
+                      <div className="text-sm text-slate-600 dark:text-slate-400">
+                        Criado em {new Date(user.createdAt).toLocaleDateString("pt-BR")}
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleResetPassword(user.id)}
+                          className="rounded border border-slate-300 px-3 py-2 text-slate-700 cursor-pointer transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700"
+                        >
+                          Resetar senha
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleAskDeactivate(user.id)}
+                          className="rounded bg-red-600 px-3 py-2 text-white cursor-pointer transition hover:bg-red-700"
+                        >
+                          Desativar usuario
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : null}
+
+            {!loading && activeUsers.length > 0 ? (
+              <div className="hidden w-full border rounded overflow-visible sm:block">
                 <table className="w-full text-slate-900 dark:text-slate-100">
                   <thead className="bg-slate-100 dark:bg-slate-900">
                     <tr className="text-slate-700 dark:text-slate-200">

@@ -218,6 +218,18 @@ export function getScaleCellLabel(value: ScaleCellValue) {
   return displayMap[value];
 }
 
+function getPrintRoleLabel(role: string) {
+  if (role === "Supervisor") {
+    return "SUP";
+  }
+
+  if (role.startsWith("Radio")) {
+    return "ROP";
+  }
+
+  return "MOT/PAT";
+}
+
 export function ScaleCalendarView({
   teamConfigs,
   month,
@@ -347,15 +359,18 @@ export function ScaleCalendarView({
               <tr>
                 <th
                   rowSpan={2}
+                  data-column="name"
                   className="sticky left-0 z-30 w-[180px] min-w-[180px] border border-slate-300 bg-slate-200 px-3 py-2 text-left font-bold uppercase tracking-wide text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 >
-                  Nome
+                  <span className="print:inline">Nome</span>
                 </th>
                 <th
                   rowSpan={2}
+                  data-column="role"
                   className="sticky left-[180px] z-30 w-[140px] min-w-[140px] border border-slate-300 bg-slate-200 px-3 py-2 text-left font-bold uppercase tracking-wide text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 >
-                  Funcao
+                  <span className="print:hidden">Funcao</span>
+                  <span className="hidden print:inline">Func.</span>
                 </th>
                 {days.map((item) => (
                   <th
@@ -398,7 +413,14 @@ export function ScaleCalendarView({
                       <div className="flex items-center gap-3 px-3 py-2">
                         <span className={`h-5 w-1.5 rounded-full ${group.accentClass}`} />
                         <span className="font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100">
-                          {group.title}
+                          {group.title === "Radio Operadores" ? (
+                            <>
+                              <span className="print:hidden">{group.title}</span>
+                              <span className="hidden print:inline">Radio Op.</span>
+                            </>
+                          ) : (
+                            group.title
+                          )}
                         </span>
                       </div>
                     </td>
@@ -406,11 +428,19 @@ export function ScaleCalendarView({
 
                   {group.rows.map((row) => (
                     <tr key={`${group.title}-${row.personKey}`} className="hover:bg-blue-50 dark:hover:bg-slate-800/80">
-                      <td className="sticky left-0 z-20 border border-slate-300 bg-white px-3 py-2 font-medium text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+                      <td
+                        data-column="name"
+                        className="sticky left-0 z-20 border border-slate-300 bg-white px-3 py-2 font-medium text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                      >
                         {row.personName}
                       </td>
-                      <td className="sticky left-[180px] z-20 border border-slate-300 bg-white px-3 py-2 text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-                        {row.role}
+                      <td
+                        data-column="role"
+                        data-print-role={getPrintRoleLabel(row.role)}
+                        className="sticky left-[180px] z-20 border border-slate-300 bg-white px-3 py-2 text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                      >
+                        <span className="print:hidden">{row.role}</span>
+                        <span className="hidden print:inline">{getPrintRoleLabel(row.role)}</span>
                       </td>
                       {days.map((dayItem, index) => {
                         const overrideKey = getOverrideKey(

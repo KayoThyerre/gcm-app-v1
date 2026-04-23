@@ -149,7 +149,7 @@ export function ScaleView() {
           @media print {
             @page {
               size: A4 landscape;
-              margin: 8mm;
+              margin: 5mm;
             }
 
             html,
@@ -181,14 +181,22 @@ export function ScaleView() {
               overflow: visible !important;
             }
 
+            [data-print-root] > * {
+              margin-top: 0 !important;
+              margin-bottom: 0 !important;
+            }
+
             [data-print-hide] {
               display: none !important;
             }
 
             [data-print-card] {
               border: 0 !important;
+              border-radius: 0 !important;
               box-shadow: none !important;
               background: #ffffff !important;
+              padding: 0 !important;
+              margin: 0 !important;
             }
 
             [data-print-section] {
@@ -197,21 +205,23 @@ export function ScaleView() {
               box-shadow: none !important;
               background: #ffffff !important;
               color: #111827 !important;
-              width: 114% !important;
-              max-width: none !important;
+              width: 100% !important;
+              max-width: 100% !important;
               margin: 0 !important;
               padding: 0 !important;
-              overflow: visible !important;
-              transform: scale(0.88);
-              transform-origin: top left;
+              overflow: hidden !important;
+              border: 0 !important;
+              border-radius: 0 !important;
+              transform: none !important;
             }
 
             [data-print-section] table {
               width: 100% !important;
               min-width: 0 !important;
+              max-width: 100% !important;
               border-collapse: collapse !important;
-              font-size: 7px !important;
-              line-height: 1.05 !important;
+              font-size: 5.5px !important;
+              line-height: 1 !important;
               table-layout: fixed !important;
             }
 
@@ -220,30 +230,49 @@ export function ScaleView() {
             }
 
             [data-scale-calendar-root="true"] {
-              gap: 6px !important;
+              gap: 2px !important;
+              border: 0 !important;
+              border-radius: 0 !important;
+              padding: 0 !important;
+              box-shadow: none !important;
             }
 
             [data-scale-calendar-root="true"] > div:first-child {
-              gap: 4px !important;
-              margin-bottom: 2px !important;
+              display: grid !important;
+              grid-template-columns: minmax(0, 1fr) auto !important;
+              align-items: end !important;
+              gap: 2px !important;
+              margin-bottom: 1px !important;
             }
 
             [data-scale-calendar-root="true"] h2 {
-              font-size: 14px !important;
+              font-size: 10px !important;
               line-height: 1.1 !important;
             }
 
-            [data-scale-calendar-root="true"] p,
-            [data-scale-calendar-root="true"] span {
-              font-size: 8px !important;
+            [data-scale-calendar-root="true"] p {
+              font-size: 6px !important;
               line-height: 1.1 !important;
+            }
+
+            [data-scale-calendar-root="true"] > div:first-child > span {
+              font-size: 6px !important;
+              line-height: 1 !important;
+              padding: 1px 3px !important;
+              border-width: 1px !important;
+              white-space: nowrap !important;
+              max-width: none !important;
+              overflow: visible !important;
             }
 
             [data-scale-table-wrapper="true"] {
-              overflow: visible !important;
-              border-width: 1px !important;
+              overflow: hidden !important;
+              border-width: 0 !important;
+              border-radius: 0 !important;
               break-inside: avoid-page;
               page-break-inside: avoid;
+              width: 100% !important;
+              max-width: 100% !important;
             }
 
             [data-scale-table="true"] tr,
@@ -271,7 +300,7 @@ export function ScaleView() {
             [data-print-section] th {
               border-color: #cbd5e1 !important;
               color: #111827 !important;
-              padding: 1px 2px !important;
+              padding: 0 !important;
               height: auto !important;
               min-height: 0 !important;
               vertical-align: middle !important;
@@ -290,60 +319,108 @@ export function ScaleView() {
               position: static !important;
             }
 
+            [data-column="name"] {
+              width: 48px !important;
+              min-width: 48px !important;
+              max-width: 48px !important;
+              padding-left: 0 !important;
+              padding-right: 0 !important;
+              white-space: nowrap !important;
+              overflow: hidden !important;
+              text-overflow: clip !important;
+            }
+
+            [data-column="role"] {
+              width: 18px !important;
+              min-width: 18px !important;
+              max-width: 18px !important;
+              padding-left: 0 !important;
+              padding-right: 0 !important;
+              white-space: nowrap !important;
+              overflow: hidden !important;
+              text-overflow: clip !important;
+            }
+
             [data-scale-table="true"] td > div,
             [data-scale-table="true"] td > span,
             [data-scale-table="true"] td > button,
             [data-scale-table="true"] th > div,
             [data-scale-table="true"] th > span {
-              padding-top: 1px !important;
-              padding-bottom: 1px !important;
+              padding-top: 0 !important;
+              padding-bottom: 0 !important;
             }
 
             [data-scale-table="true"] tr td[colspan] > div {
-              padding: 2px 4px !important;
-              gap: 4px !important;
+              padding: 0 0.5px !important;
+              gap: 1px !important;
             }
 
             [data-scale-table="true"] tr td[colspan] span:first-child {
-              height: 10px !important;
-              width: 3px !important;
+              height: 6px !important;
+              width: 2px !important;
+            }
+
+            [data-scale-table="true"] th:not([data-column]),
+            [data-scale-table="true"] td:not([data-column]) {
+              min-width: 5.9mm !important;
+              width: 5.9mm !important;
+              max-width: 5.9mm !important;
+              padding-left: 0 !important;
+              padding-right: 0 !important;
+            }
+
+            [data-scale-table="true"] thead th:not([data-column]) {
+              font-size: 4.3px !important;
+              line-height: 1 !important;
+              padding-top: 0 !important;
+              padding-bottom: 0 !important;
+              height: 8px !important;
+            }
+
+            [data-scale-table="true"] tbody td:not([data-column]) button {
+              min-height: 8px !important;
+              height: 8px !important;
+              width: 100% !important;
+              font-size: 4.4px !important;
+              line-height: 0.95 !important;
+              padding: 0 !important;
+              border-width: 0.5px !important;
+              border-radius: 1px !important;
+            }
+
+            [data-scale-table="true"] tbody tr {
+              height: 9px !important;
+            }
+
+            [data-scale-table="true"] thead tr:first-child th:not([data-column]) {
+              font-size: 4.6px !important;
+              height: 8px !important;
+            }
+
+            [data-scale-table="true"] thead tr:last-child th:not([data-column]) {
+              font-size: 3.8px !important;
+              height: 6px !important;
+              letter-spacing: -0.1px !important;
             }
 
             [data-scale-vacation="true"] {
-              break-inside: avoid-page;
-              page-break-inside: avoid;
-              padding: 6px 8px !important;
-              margin-top: 4px !important;
-            }
-
-            [data-scale-vacation="true"] > div:first-child {
-              gap: 2px !important;
-            }
-
-            [data-scale-vacation="true"] > div:last-child {
-              margin-top: 6px !important;
-              display: grid !important;
-              grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-              gap: 4px !important;
-            }
-
-            [data-scale-vacation="true"] > div:last-child > div {
-              padding: 4px 6px !important;
-              font-size: 7px !important;
-              line-height: 1.15 !important;
+              display: none !important;
             }
 
             [data-scale-legend="true"] {
               display: flex !important;
               flex-wrap: nowrap !important;
-              gap: 6px !important;
-              padding: 6px 8px !important;
-              margin-top: 4px !important;
-              font-size: 7px !important;
+              gap: 4px !important;
+              padding: 2px 0 !important;
+              margin-top: 2px !important;
+              font-size: 6px !important;
               line-height: 1.1 !important;
               white-space: nowrap !important;
               break-inside: avoid-page;
               page-break-inside: avoid;
+              border: 0 !important;
+              border-radius: 0 !important;
+              background: transparent !important;
             }
 
             [data-scale-legend="true"] > span {
@@ -358,7 +435,7 @@ export function ScaleView() {
         `}
       </style>
 
-      <div data-print-root className="max-w-7xl mx-auto p-8 space-y-8">
+      <div data-print-root className="max-w-7xl mx-auto p-4 space-y-8 sm:p-8">
       <div data-print-hide className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
@@ -385,7 +462,7 @@ export function ScaleView() {
 
       {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
 
-      <section data-print-hide className="rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-900/40">
+      <section data-print-hide className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/40 sm:p-5">
         <div className="grid gap-4 md:grid-cols-[minmax(0,320px)_1fr] md:items-end">
           <div className="space-y-1">
             <label
@@ -433,7 +510,7 @@ export function ScaleView() {
       ) : null}
 
       {!loadingMonths && scaleMonths.length === 0 ? (
-        <section className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-800">
+        <section className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-center dark:border-slate-700 dark:bg-slate-800 sm:p-8">
           <p className="text-slate-600 dark:text-slate-300">Nenhum mes de escala cadastrado.</p>
         </section>
       ) : null}

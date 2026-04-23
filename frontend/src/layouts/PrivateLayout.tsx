@@ -141,8 +141,8 @@ export function PrivateLayout() {
   return (
     <div className="min-h-screen bg-[url('/bg-light.png')] bg-cover bg-center bg-no-repeat dark:bg-[url('/bg-dark.png')]">
       <div className="min-h-screen bg-blue-50/40 dark:bg-black/40 flex flex-col">
-        <header className="h-16 bg-white/70 dark:bg-slate-900/80 backdrop-blur-md border-b border-blue-200/40 dark:border-slate-800 flex items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-3">
+        <header className="h-16 bg-white/70 dark:bg-slate-900/80 backdrop-blur-md border-b border-blue-200/40 dark:border-slate-800 flex items-center justify-between px-3 sm:px-4 md:px-6">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
               className="md:hidden text-slate-600 dark:text-slate-300"
@@ -162,7 +162,7 @@ export function PrivateLayout() {
             </button>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               type="button"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -174,7 +174,7 @@ export function PrivateLayout() {
             <button
               type="button"
               onClick={() => navigate("/settings/profile")}
-              className="group flex items-center gap-3 cursor-pointer rounded-lg px-3 py-2 transition-all duration-200 hover:bg-blue-100 dark:hover:bg-blue-600/20"
+              className="group flex items-center gap-2 cursor-pointer rounded-lg px-2 py-2 transition-all duration-200 hover:bg-blue-100 dark:hover:bg-blue-600/20 sm:gap-3 sm:px-3"
             >
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
@@ -227,7 +227,7 @@ export function PrivateLayout() {
           <aside
             className={`
               fixed z-30 inset-y-0 left-0
-              bg-white/70 dark:bg-slate-950 backdrop-blur-md border-r border-blue-200/40 dark:border-slate-800 px-4 py-6
+              w-72 max-w-[85vw] bg-white/70 dark:bg-slate-950 backdrop-blur-md border-r border-blue-200/40 dark:border-slate-800 px-3 py-5 sm:px-4 sm:py-6
               transform transition-all duration-300
               ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
               md:static md:translate-x-0
@@ -273,9 +273,9 @@ export function PrivateLayout() {
             </nav>
           </aside>
 
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-3 sm:p-6">
             <div className="max-w-7xl mx-auto">
-              <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl shadow-blue-900/5 dark:shadow-black/40 border border-blue-200/40 dark:border-slate-700 p-6 h-full">
+              <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl shadow-blue-900/5 dark:shadow-black/40 border border-blue-200/40 dark:border-slate-700 p-3 h-full sm:p-6">
                 <Outlet />
               </div>
             </div>

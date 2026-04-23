@@ -119,7 +119,7 @@ export function ApproachedList() {
     paginatedApproaches.find((approach) => approach.id === selectedApproach?.id) ?? null;
 
   return (
-    <div className="max-w-6xl mx-auto p-8 space-y-8">
+    <div className="max-w-6xl mx-auto p-4 space-y-8 sm:p-8">
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
           Abordados
@@ -226,7 +226,7 @@ export function ApproachedList() {
             </div>
           </section>
 
-          <aside className="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-5 shadow-sm dark:border-slate-700 dark:from-slate-800 dark:to-slate-900">
+          <aside className="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-4 shadow-sm dark:border-slate-700 dark:from-slate-800 dark:to-slate-900 sm:p-5">
             <div className="space-y-5">
               <div className="border-b border-slate-200 pb-4 dark:border-slate-700">
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
