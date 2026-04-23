@@ -718,7 +718,7 @@ export function Scales() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 space-y-8 sm:p-8">
+    <div className="mx-auto min-w-0 max-w-7xl space-y-8 overflow-x-hidden p-4 sm:overflow-x-visible sm:p-8">
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
           Escalas mensais
@@ -1013,14 +1013,16 @@ export function Scales() {
             </section>
           ) : null}
 
-          <ScaleCalendarView
-            teamConfigs={teamConfigs}
-            month={month}
-            year={year}
-            loading={loadingTeams}
-            cellOverrides={cellOverrides}
-            onCellClick={selectedScaleMonth ? handleOpenOverrideModal : undefined}
-          />
+          <div className="w-full min-w-0 max-w-full overflow-hidden">
+            <ScaleCalendarView
+              teamConfigs={teamConfigs}
+              month={month}
+              year={year}
+              loading={loadingTeams}
+              cellOverrides={cellOverrides}
+              onCellClick={selectedScaleMonth ? handleOpenOverrideModal : undefined}
+            />
+          </div>
         </>
       ) : null}
 
