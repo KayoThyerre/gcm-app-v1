@@ -1,6 +1,19 @@
-import { createContext, useContext, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { isAxiosError } from "axios";
-import { api } from "../services/api";
+import { useNavigate } from "react-router-dom";
+import {
+  api,
+  clearStoredAuth,
+  registerSessionInvalidHandler,
+  resetSessionInvalidState,
+} from "../services/api";
 
 type User = {
   id?: string;
@@ -23,8 +36,16 @@ type AuthContextData = {
 };
 
 const AuthContext = createContext({} as AuthContextData);
+const INACTIVITY_TIMEOUT = 20 * 60 * 1000;
+const ACTIVITY_EVENTS: Array<keyof WindowEventMap> = [
+  "click",
+  "keydown",
+  "scroll",
+  "touchstart",
+];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate();
   const [user, setUserState] = useState<User | null>(() => {
     const token = localStorage.getItem("auth:token");
     const storedUser = localStorage.getItem("auth:user");
@@ -43,17 +64,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       return JSON.parse(storedUser);
     } catch {
-      localStorage.removeItem("auth:token");
-      localStorage.removeItem("auth:user");
-      delete api.defaults.headers.common.Authorization;
+      clearStoredAuth();
       return null;
     }
   });
 
   const [authError, setAuthError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(() =>
+    Boolean(localStorage.getItem("auth:token"))
+  );
+  const inactivityTimeoutRef = useRef<number | null>(null);
+  const sessionValidationStartedRef = useRef(false);
 
   const isAuthenticated = !!user;
-  const loading = false;
+
+  const clearAuthState = useCallback(() => {
+    clearStoredAuth();
+    setUserState(null);
+  }, []);
+
+  const clearInactivityTimeout = useCallback(() => {
+    if (inactivityTimeoutRef.current !== null) {
+      window.clearTimeout(inactivityTimeoutRef.current);
+      inactivityTimeoutRef.current = null;
+    }
+  }, []);
+
+  const redirectToLogin = useCallback(
+    (message: string) => {
+      navigate("/login", {
+        replace: true,
+        state: { message },
+      });
+    },
+    [navigate]
+  );
 
   function setUser(updatedUser: Partial<User>) {
     setUserState((previousUser) => {
@@ -66,6 +111,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return mergedUser;
     });
   }
+
+  const logout = useCallback(() => {
+    resetSessionInvalidState();
+    clearInactivityTimeout();
+    clearAuthState();
+  }, [clearAuthState, clearInactivityTimeout]);
+
+  const logoutDueToInactivity = useCallback(() => {
+    resetSessionInvalidState();
+    clearInactivityTimeout();
+    clearAuthState();
+    redirectToLogin("Sess\u00e3o encerrada por inatividade");
+  }, [clearAuthState, clearInactivityTimeout, redirectToLogin]);
+
+  const handleInvalidSession = useCallback(
+    (message: string) => {
+      clearInactivityTimeout();
+      clearAuthState();
+      redirectToLogin(message);
+    },
+    [clearAuthState, clearInactivityTimeout, redirectToLogin]
+  );
+
+  const resetInactivityTimer = useCallback(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    clearInactivityTimeout();
+    inactivityTimeoutRef.current = window.setTimeout(() => {
+      logoutDueToInactivity();
+    }, INACTIVITY_TIMEOUT);
+  }, [clearInactivityTimeout, isAuthenticated, logoutDueToInactivity]);
 
   async function login(email: string, password: string) {
     try {
@@ -83,6 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("auth:token", token);
       localStorage.setItem("auth:user", JSON.stringify(user));
 
+      resetSessionInvalidState();
       setUserState(user);
     } catch (error) {
       let message = "Erro ao tentar fazer login.";
@@ -99,12 +178,85 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  function logout() {
-    localStorage.removeItem("auth:token");
-    localStorage.removeItem("auth:user");
-    delete api.defaults.headers.common.Authorization;
-    setUserState(null);
-  }
+  useEffect(() => {
+    registerSessionInvalidHandler(handleInvalidSession);
+
+    return () => {
+      registerSessionInvalidHandler(null);
+    };
+  }, [handleInvalidSession]);
+
+  useEffect(() => {
+    if (sessionValidationStartedRef.current) {
+      return;
+    }
+
+    sessionValidationStartedRef.current = true;
+
+    const token = localStorage.getItem("auth:token");
+
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    void api
+      .get("/profile")
+      .then((response) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setUserState((previousUser) => {
+          if (previousUser) {
+            const validatedUser = { ...previousUser, ...response.data };
+            localStorage.setItem("auth:user", JSON.stringify(validatedUser));
+            return validatedUser;
+          }
+
+          return previousUser;
+        });
+      })
+      .catch((error) => {
+        if (!isMounted || !isAxiosError(error) || error.response?.status === 401) {
+          return;
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      clearInactivityTimeout();
+      return;
+    }
+
+    resetInactivityTimer();
+
+    for (const eventName of ACTIVITY_EVENTS) {
+      window.addEventListener(eventName, resetInactivityTimer, {
+        passive: true,
+      });
+    }
+
+    return () => {
+      clearInactivityTimeout();
+
+      for (const eventName of ACTIVITY_EVENTS) {
+        window.removeEventListener(eventName, resetInactivityTimer);
+      }
+    };
+  }, [clearInactivityTimeout, isAuthenticated, resetInactivityTimer]);
 
   return (
     <AuthContext.Provider

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { Login } from "../src/pages/Login";
 import { Register } from "./pages/Register";
 import { Home } from "../src/pages/Home";
@@ -103,10 +103,8 @@ function renderRoute(route: AppRoute, index: number) {
 
 export function AppRoutes() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {routes.map(renderRoute)}
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      {routes.map(renderRoute)}
+    </Routes>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Input } from "../components/Input";
 import { Button } from "../components/Button";
 import { AuthCard } from "../components/auth/AuthCard";
@@ -9,13 +9,14 @@ import { PublicLayout } from "../layouts/PublicLayout";
 
 export function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, loading: authLoading, login } = useAuth();
   const { theme, setTheme } = useTheme();
   const isDark = theme === "dark";
 
@@ -23,11 +24,22 @@ export function Login() {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    const message = location.state?.message;
+
+    if (typeof message !== "string" || !message.trim()) {
+      return;
+    }
+
+    setErrorMessage(message);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     try {
-      setLoading(true);
+      setSubmitting(true);
       setErrorMessage(null);
       await login(email, password);
       navigate("/home");
@@ -36,7 +48,7 @@ export function Login() {
         error instanceof Error ? error.message : "Erro ao tentar fazer login."
       );
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   }
 
@@ -44,7 +56,7 @@ export function Login() {
     setTheme(isDark ? "light" : "dark");
   }
 
-  if (isAuthenticated) {
+  if (isAuthenticated && !authLoading) {
     return <Navigate to="/home" replace />;
   }
 
@@ -93,8 +105,8 @@ export function Login() {
                 }}
               />
 
-              <Button type="submit" disabled={loading}>
-                {loading ? "Entrando..." : "Entrar"}
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Entrando..." : "Entrar"}
               </Button>
 
               <button
