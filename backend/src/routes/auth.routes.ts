@@ -12,6 +12,14 @@ const resendVerificationLimiter = rateLimit({
   statusCode: 429,
   message: "Muitas solicitações. Tente novamente mais tarde.",
 });
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 4,
+  statusCode: 429,
+  message: {
+    error: "Muitas tentativas de login. Tente novamente mais tarde.",
+  },
+});
 
 authRoutes.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
@@ -169,7 +177,7 @@ authRoutes.post("/resend-verification", resendVerificationLimiter, async (req, r
   });
 });
 
-authRoutes.post("/login", async (req, res) => {
+authRoutes.post("/login", loginLimiter, async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
