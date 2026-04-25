@@ -103,6 +103,7 @@ export function Register() {
                 type="text"
                 placeholder="Nome"
                 value={name}
+                maxLength={100}
                 onChange={(e) => {
                   if (errorMessage) setErrorMessage(null);
                   setName(e.target.value);
@@ -113,6 +114,7 @@ export function Register() {
                 type="email"
                 placeholder="E-mail"
                 value={email}
+                maxLength={150}
                 onChange={(e) => {
                   if (errorMessage) setErrorMessage(null);
                   setEmail(e.target.value);
@@ -123,6 +125,7 @@ export function Register() {
                 type="password"
                 placeholder="Senha"
                 value={password}
+                maxLength={128}
                 onChange={(e) => {
                   if (errorMessage) setErrorMessage(null);
                   setPassword(e.target.value);
@@ -133,6 +136,7 @@ export function Register() {
                 type="password"
                 placeholder="Confirmar senha"
                 value={confirmPassword}
+                maxLength={128}
                 onChange={(e) => {
                   if (errorMessage) setErrorMessage(null);
                   setConfirmPassword(e.target.value);

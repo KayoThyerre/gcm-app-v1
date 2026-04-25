@@ -4,6 +4,7 @@ import { Router } from "express";
 import { prisma } from "../prisma/client";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import { ensureRole } from "../middlewares/ensureRole";
+import { FIELD_LIMITS, validateMaxLength } from "../utils/validation";
 
 const router = Router();
 const VIEW_AND_CREATE_ROLES = ["USER", "SUPERVISOR", "ADMIN", "DEV"] as const;
@@ -76,6 +77,18 @@ router.post(
 
     if (typeof name !== "string" || !name.trim()) {
       return res.status(400).json({ message: "name is required" });
+    }
+
+    const maxLengthError =
+      validateMaxLength(name, "Nome", FIELD_LIMITS.approachName) ||
+      validateMaxLength(cpf, "CPF", FIELD_LIMITS.cpf) ||
+      validateMaxLength(rg, "RG", FIELD_LIMITS.rg) ||
+      validateMaxLength(motherName, "Nome da mae", FIELD_LIMITS.motherName) ||
+      validateMaxLength(notes, "Observacoes", FIELD_LIMITS.notes) ||
+      validateMaxLength(photoUrl, "Foto", FIELD_LIMITS.photoUrl);
+
+    if (maxLengthError) {
+      return res.status(400).json({ message: maxLengthError });
     }
 
     if (cpf !== undefined && typeof cpf !== "string") {
@@ -298,6 +311,18 @@ router.put(
 
     if (Object.keys(data).length === 1) {
       return res.status(400).json({ message: "No data provided" });
+    }
+
+    const maxLengthError =
+      validateMaxLength(name, "Nome", FIELD_LIMITS.approachName) ||
+      validateMaxLength(cpf, "CPF", FIELD_LIMITS.cpf) ||
+      validateMaxLength(rg, "RG", FIELD_LIMITS.rg) ||
+      validateMaxLength(motherName, "Nome da mae", FIELD_LIMITS.motherName) ||
+      validateMaxLength(notes, "Observacoes", FIELD_LIMITS.notes) ||
+      validateMaxLength(photoUrl, "Foto", FIELD_LIMITS.photoUrl);
+
+    if (maxLengthError) {
+      return res.status(400).json({ message: maxLengthError });
     }
 
     try {

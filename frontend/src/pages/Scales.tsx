@@ -652,6 +652,7 @@ export function Scales() {
       .split(/[,\r\n]+/)
       .map((member) => member.trim())
       .filter(Boolean);
+    const oversizedMember = members.find((member) => member.length > 150);
 
     if (!supervisorName) {
       setTeamMessage(teamName, {
@@ -665,6 +666,14 @@ export function Scales() {
       setTeamMessage(teamName, {
         type: "error",
         text: `Informe o radio operador da equipe ${teamName}.`,
+      });
+      return;
+    }
+
+    if (supervisorName.length > 150 || radioOperatorName.length > 150 || oversizedMember) {
+      setTeamMessage(teamName, {
+        type: "error",
+        text: "Supervisor, radio operador e integrantes devem ter no maximo 150 caracteres.",
       });
       return;
     }
@@ -847,6 +856,7 @@ export function Scales() {
                         <input
                           type="text"
                           value={form.supervisorName}
+                          maxLength={150}
                           onChange={(event) => updateTeamForm(teamName, "supervisorName", event.target.value)}
                           className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
                         />
@@ -857,6 +867,7 @@ export function Scales() {
                         <input
                           type="text"
                           value={form.radioOperatorName}
+                          maxLength={150}
                           onChange={(event) => updateTeamForm(teamName, "radioOperatorName", event.target.value)}
                           className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
                         />
@@ -866,6 +877,7 @@ export function Scales() {
                         <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Integrantes</label>
                         <textarea
                           value={form.members}
+                          maxLength={3000}
                           onChange={(event) => updateTeamForm(teamName, "members", event.target.value)}
                           rows={4}
                           placeholder="Separe os nomes por virgula ou por linha"

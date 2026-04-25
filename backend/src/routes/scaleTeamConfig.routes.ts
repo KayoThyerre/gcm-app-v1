@@ -3,6 +3,11 @@ import { InitialCycle } from "@prisma/client";
 import { prisma } from "../prisma/client";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import { ensureRole } from "../middlewares/ensureRole";
+import {
+  FIELD_LIMITS,
+  validateMaxLength,
+  validateStringArrayMaxLength,
+} from "../utils/validation";
 
 const router = Router();
 const allowedTeamNames = new Set(["A", "B", "C", "D"]);
@@ -80,6 +85,15 @@ router.post(
 
     if (parsedMembers === null) {
       return res.status(400).json({ message: "members must be an array of strings" });
+    }
+
+    const maxLengthError =
+      validateMaxLength(supervisorName, "Supervisor", FIELD_LIMITS.scalePersonName) ||
+      validateMaxLength(radioOperatorName, "Radio operador", FIELD_LIMITS.scalePersonName) ||
+      validateStringArrayMaxLength(parsedMembers, "Integrantes", FIELD_LIMITS.scalePersonName);
+
+    if (maxLengthError) {
+      return res.status(400).json({ message: maxLengthError });
     }
 
     const scaleMonth = await prisma.scaleMonth.findUnique({
@@ -196,6 +210,15 @@ router.put(
 
     if (parsedMembers === null) {
       return res.status(400).json({ message: "members must be an array of strings" });
+    }
+
+    const maxLengthError =
+      validateMaxLength(supervisorName, "Supervisor", FIELD_LIMITS.scalePersonName) ||
+      validateMaxLength(radioOperatorName, "Radio operador", FIELD_LIMITS.scalePersonName) ||
+      validateStringArrayMaxLength(parsedMembers, "Integrantes", FIELD_LIMITS.scalePersonName);
+
+    if (maxLengthError) {
+      return res.status(400).json({ message: maxLengthError });
     }
 
     const existingTeamConfig = await prisma.scaleTeamConfig.findUnique({

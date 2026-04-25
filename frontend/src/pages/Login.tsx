@@ -89,6 +89,7 @@ export function Login() {
                 type="email"
                 placeholder="E-mail"
                 value={email}
+                maxLength={150}
                 onChange={(e) => {
                   if (errorMessage) setErrorMessage(null);
                   setEmail(e.target.value);
@@ -99,6 +100,7 @@ export function Login() {
                 type="password"
                 placeholder="Senha"
                 value={password}
+                maxLength={128}
                 onChange={(e) => {
                   if (errorMessage) setErrorMessage(null);
                   setPassword(e.target.value);

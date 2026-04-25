@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { randomBytes } from "crypto";
 import rateLimit from "express-rate-limit";
+import { FIELD_LIMITS, validateMaxLength } from "../utils/validation";
 
 export const authRoutes = Router();
 const resendVerificationLimiter = rateLimit({
@@ -28,6 +29,15 @@ authRoutes.post("/register", async (req, res) => {
     return res.status(400).json({
       error: "Name, email e password sao obrigatorios",
     });
+  }
+
+  const maxLengthError =
+    validateMaxLength(name, "Nome", FIELD_LIMITS.name) ||
+    validateMaxLength(email, "E-mail", FIELD_LIMITS.email) ||
+    validateMaxLength(password, "Senha", FIELD_LIMITS.password);
+
+  if (maxLengthError) {
+    return res.status(400).json({ error: maxLengthError });
   }
 
   const userAlreadyExists = await prisma.user.findUnique({
@@ -125,6 +135,12 @@ authRoutes.post("/resend-verification", resendVerificationLimiter, async (req, r
     });
   }
 
+  const maxLengthError = validateMaxLength(email, "E-mail", FIELD_LIMITS.email);
+
+  if (maxLengthError) {
+    return res.status(400).json({ error: maxLengthError });
+  }
+
   const user = await prisma.user.findUnique({
     where: { email },
     select: {
@@ -184,6 +200,14 @@ authRoutes.post("/login", loginLimiter, async (req, res) => {
     return res.status(400).json({
       error: "Email e senha são obrigatórios",
     });
+  }
+
+  const maxLengthError =
+    validateMaxLength(email, "E-mail", FIELD_LIMITS.email) ||
+    validateMaxLength(password, "Senha", FIELD_LIMITS.password);
+
+  if (maxLengthError) {
+    return res.status(400).json({ error: maxLengthError });
   }
 
   const user = await prisma.user.findUnique({

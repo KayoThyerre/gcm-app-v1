@@ -385,6 +385,7 @@ export function Approaches() {
                 id="name"
                 type="text"
                 value={name}
+                maxLength={150}
                 onChange={(event) => {
                   setName(event.target.value);
                   setIsDirty(true);
@@ -405,6 +406,7 @@ export function Approaches() {
                 id="cpf"
                 type="text"
                 value={cpf}
+                maxLength={20}
                 onChange={(event) => {
                   setCpf(event.target.value);
                   setIsDirty(true);
@@ -425,6 +427,7 @@ export function Approaches() {
                 id="rg"
                 type="text"
                 value={rg}
+                maxLength={30}
                 onChange={(event) => {
                   setRg(event.target.value);
                   setIsDirty(true);
@@ -465,6 +468,7 @@ export function Approaches() {
                 id="motherName"
                 type="text"
                 value={motherName}
+                maxLength={150}
                 onChange={(event) => {
                   setMotherName(event.target.value);
                   setIsDirty(true);
@@ -485,6 +489,7 @@ export function Approaches() {
             <textarea
               id="notes"
               value={notes}
+              maxLength={2000}
               onChange={(event) => {
                 setNotes(event.target.value);
                 setIsDirty(true);

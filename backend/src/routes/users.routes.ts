@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import { Status } from "@prisma/client";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import { ensureRole } from "../middlewares/ensureRole";
+import { FIELD_LIMITS, validateMaxLength } from "../utils/validation";
 
 export const usersRoutes = Router();
 
@@ -38,6 +39,15 @@ usersRoutes.post(
     return res.status(400).json({
       error: "Name, email e password são obrigatórios",
     });
+  }
+
+  const maxLengthError =
+    validateMaxLength(name, "Nome", FIELD_LIMITS.name) ||
+    validateMaxLength(email, "E-mail", FIELD_LIMITS.email) ||
+    validateMaxLength(password, "Senha", FIELD_LIMITS.password);
+
+  if (maxLengthError) {
+    return res.status(400).json({ error: maxLengthError });
   }
 
   const userAlreadyExists = await prisma.user.findUnique({

@@ -88,6 +88,7 @@ export function ProfileSecurity() {
             id="currentPassword"
             type="password"
             value={currentPassword}
+            maxLength={128}
             onChange={(event) => setCurrentPassword(event.target.value)}
             className="border rounded-md px-3 py-2 w-full bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
           />
@@ -104,6 +105,7 @@ export function ProfileSecurity() {
             id="newPassword"
             type="password"
             value={newPassword}
+            maxLength={128}
             onChange={(event) => setNewPassword(event.target.value)}
             className="border rounded-md px-3 py-2 w-full bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
           />
@@ -120,6 +122,7 @@ export function ProfileSecurity() {
             id="confirmNewPassword"
             type="password"
             value={confirmNewPassword}
+            maxLength={128}
             onChange={(event) => setConfirmNewPassword(event.target.value)}
             className="border rounded-md px-3 py-2 w-full bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
           />

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import { prisma } from "../prisma/client";
 import bcrypt from "bcrypt";
+import { FIELD_LIMITS, validateMaxLength } from "../utils/validation";
 
 export const profileRoutes = Router();
 
@@ -64,6 +65,15 @@ profileRoutes.patch("/", ensureAuthenticated, async (req, res) => {
     });
   }
 
+  const maxLengthError =
+    validateMaxLength(name, "Nome", FIELD_LIMITS.name) ||
+    validateMaxLength(phone, "Telefone", FIELD_LIMITS.phone) ||
+    validateMaxLength(avatarUrl, "Avatar", FIELD_LIMITS.imageUrl);
+
+  if (maxLengthError) {
+    return res.status(400).json({ error: maxLengthError });
+  }
+
   const data: {
     name?: string;
     phone?: string;
@@ -118,6 +128,14 @@ profileRoutes.post("/change-password", ensureAuthenticated, async (req, res) => 
     return res.status(400).json({
       error: "newPassword deve ter no minimo 6 caracteres",
     });
+  }
+
+  const maxLengthError =
+    validateMaxLength(currentPassword, "Senha atual", FIELD_LIMITS.password) ||
+    validateMaxLength(newPassword, "Nova senha", FIELD_LIMITS.password);
+
+  if (maxLengthError) {
+    return res.status(400).json({ error: maxLengthError });
   }
 
   const user = await prisma.user.findUnique({

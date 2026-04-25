@@ -289,6 +289,7 @@ export function News() {
               id="title"
               type="text"
               value={title}
+              maxLength={180}
               onChange={(event) => {
                 setTitle(event.target.value);
                 setIsDirty(true);
@@ -308,6 +309,7 @@ export function News() {
             <textarea
               id="content"
               value={content}
+              maxLength={10000}
               onChange={(event) => {
                 setContent(event.target.value);
                 setIsDirty(true);

@@ -26,7 +26,7 @@ app.use(
     origin: corsOrigin,
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 app.use("/uploads/news", express.static(newsUploadsPath));
 app.get("/uploads/:filename", (req, res) => {
   const { filename } = req.params;

@@ -212,6 +212,7 @@ export function Profile() {
             id="name"
             type="text"
             value={name}
+            maxLength={100}
             onChange={(event) => {
               setName(event.target.value);
               if (successMessage) setSuccessMessage(null);
@@ -247,6 +248,7 @@ export function Profile() {
             id="phone"
             type="text"
             value={phone}
+            maxLength={20}
             onChange={(event) => {
               setPhone(event.target.value);
               if (successMessage) setSuccessMessage(null);

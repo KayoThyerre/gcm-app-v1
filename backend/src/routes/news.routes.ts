@@ -3,6 +3,7 @@ import { prisma } from "../prisma/client";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import { ensureRole } from "../middlewares/ensureRole";
 import { generateSlug } from "../utils/slug";
+import { FIELD_LIMITS, validateMaxLength } from "../utils/validation";
 
 export const newsRoutes = Router();
 
@@ -20,6 +21,15 @@ newsRoutes.post(
 
     if (typeof title !== "string" || !title.trim() || typeof content !== "string" || !content.trim()) {
       return res.status(400).json({ message: "Title and content are required" });
+    }
+
+    const maxLengthError =
+      validateMaxLength(title, "Titulo", FIELD_LIMITS.newsTitle) ||
+      validateMaxLength(content, "Conteudo", FIELD_LIMITS.newsContent) ||
+      validateMaxLength(imageUrl, "Imagem", FIELD_LIMITS.imageUrl);
+
+    if (maxLengthError) {
+      return res.status(400).json({ message: maxLengthError });
     }
 
     if (imageUrl !== undefined && typeof imageUrl !== "string") {
@@ -102,6 +112,10 @@ newsRoutes.get(
 newsRoutes.get("/:id", async (req, res) => {
   const { id } = req.params;
 
+  if (typeof id !== "string") {
+    return res.status(400).json({ message: "Invalid news id" });
+  }
+
   const news = await prisma.news.findUnique({
     where: { id },
   });
@@ -119,6 +133,11 @@ newsRoutes.put(
   ensureRole(["ADMIN"]),
   async (req, res) => {
     const { id } = req.params;
+
+    if (typeof id !== "string") {
+      return res.status(400).json({ message: "Invalid news id" });
+    }
+
     const { title, content, imageUrl, published } = req.body as {
       title?: unknown;
       content?: unknown;
@@ -138,6 +157,10 @@ newsRoutes.put(
       if (typeof title !== "string" || !title.trim()) {
         return res.status(400).json({ message: "Title and content are required" });
       }
+      const maxLengthError = validateMaxLength(title, "Titulo", FIELD_LIMITS.newsTitle);
+      if (maxLengthError) {
+        return res.status(400).json({ message: maxLengthError });
+      }
       data.title = title.trim();
       data.slug = generateSlug(title);
     }
@@ -146,12 +169,20 @@ newsRoutes.put(
       if (typeof content !== "string" || !content.trim()) {
         return res.status(400).json({ message: "Title and content are required" });
       }
+      const maxLengthError = validateMaxLength(content, "Conteudo", FIELD_LIMITS.newsContent);
+      if (maxLengthError) {
+        return res.status(400).json({ message: maxLengthError });
+      }
       data.content = content.trim();
     }
 
     if (imageUrl !== undefined) {
       if (typeof imageUrl !== "string") {
         return res.status(400).json({ message: "imageUrl must be a string" });
+      }
+      const maxLengthError = validateMaxLength(imageUrl, "Imagem", FIELD_LIMITS.imageUrl);
+      if (maxLengthError) {
+        return res.status(400).json({ message: maxLengthError });
       }
       data.imageUrl = imageUrl.trim() || null;
     }
@@ -186,6 +217,10 @@ newsRoutes.delete(
   ensureRole(["ADMIN"]),
   async (req, res) => {
     const { id } = req.params;
+
+    if (typeof id !== "string") {
+      return res.status(400).json({ message: "Invalid news id" });
+    }
 
     try {
       await prisma.news.delete({
