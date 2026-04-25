@@ -17,6 +17,7 @@ import scaleOverrideRoutes from "./routes/scaleOverride.routes";
 
 const app = express();
 const uploadsPath = path.resolve(process.cwd(), "uploads");
+const newsUploadsPath = path.join(uploadsPath, "news");
 const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:5173";
 const PORT = Number(process.env.PORT) || 3333;
 
@@ -26,7 +27,20 @@ app.use(
   })
 );
 app.use(express.json());
-app.use("/uploads", express.static(uploadsPath));
+app.use("/uploads/news", express.static(newsUploadsPath));
+app.get("/uploads/:filename", (req, res) => {
+  const { filename } = req.params;
+
+  if (!filename.startsWith("avatar-") || filename !== path.basename(filename)) {
+    return res.status(404).json({ error: "Arquivo nao encontrado" });
+  }
+
+  return res.sendFile(path.join(uploadsPath, filename), (error) => {
+    if (error && !res.headersSent) {
+      return res.status(404).json({ error: "Arquivo nao encontrado" });
+    }
+  });
+});
 
 app.get("/health", (req, res) => {
   return res.json({

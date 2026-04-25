@@ -40,6 +40,7 @@ export function ApproachedList() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedApproach, setSelectedApproach] = useState<Approach | null>(null);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
@@ -117,6 +118,45 @@ export function ApproachedList() {
 
   const visibleSelectedApproach =
     paginatedApproaches.find((approach) => approach.id === selectedApproach?.id) ?? null;
+
+  useEffect(() => {
+    if (!visibleSelectedApproach?.id || !visibleSelectedApproach.photoUrl) {
+      setSelectedImageUrl(null);
+      return;
+    }
+
+    let isCurrent = true;
+    let protectedImageUrl: string | null = null;
+
+    void api
+      .get<Blob>(`/approaches/${visibleSelectedApproach.id}/image`, {
+        responseType: "blob",
+      })
+      .then((response) => {
+        const nextImageUrl = URL.createObjectURL(response.data);
+
+        if (!isCurrent) {
+          URL.revokeObjectURL(nextImageUrl);
+          return;
+        }
+
+        protectedImageUrl = nextImageUrl;
+        setSelectedImageUrl(nextImageUrl);
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setSelectedImageUrl(null);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+
+      if (protectedImageUrl) {
+        URL.revokeObjectURL(protectedImageUrl);
+      }
+    };
+  }, [visibleSelectedApproach?.id, visibleSelectedApproach?.photoUrl]);
 
   return (
     <div className="max-w-6xl mx-auto p-4 space-y-8 sm:p-8">
@@ -239,9 +279,9 @@ export function ApproachedList() {
 
               {visibleSelectedApproach ? (
                 <div className="space-y-5">
-                  {visibleSelectedApproach.photoUrl ? (
+                  {visibleSelectedApproach.photoUrl && selectedImageUrl ? (
                     <img
-                      src={visibleSelectedApproach.photoUrl}
+                      src={selectedImageUrl}
                       alt={visibleSelectedApproach.name}
                       className="w-full max-w-[220px] rounded-[8px] border border-white/10 p-1 bg-white/[0.02] object-cover"
                     />

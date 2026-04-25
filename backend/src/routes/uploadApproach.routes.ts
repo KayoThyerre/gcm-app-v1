@@ -3,8 +3,10 @@ import path from "path";
 import { Router } from "express";
 import multer from "multer";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
+import { ensureRole } from "../middlewares/ensureRole";
 
 export const uploadApproachRoutes = Router();
+const UPLOAD_APPROACH_ROLES = ["USER", "SUPERVISOR", "ADMIN", "DEV"] as const;
 
 const approachUploadsPath = path.resolve(process.cwd(), "uploads", "approaches");
 const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -38,30 +40,35 @@ const upload = multer({
   },
 });
 
-uploadApproachRoutes.post("/", ensureAuthenticated, (req, res) => {
-  upload.single("image")(req, res, (error) => {
-    if (error instanceof multer.MulterError) {
-      if (error.code === "LIMIT_FILE_SIZE") {
+uploadApproachRoutes.post(
+  "/",
+  ensureAuthenticated,
+  ensureRole([...UPLOAD_APPROACH_ROLES]),
+  (req, res) => {
+    upload.single("image")(req, res, (error) => {
+      if (error instanceof multer.MulterError) {
+        if (error.code === "LIMIT_FILE_SIZE") {
+          return res.status(400).json({
+            error: "Arquivo muito grande. Tamanho maximo de 5MB.",
+          });
+        }
+
         return res.status(400).json({
-          error: "Arquivo muito grande. Tamanho maximo de 5MB.",
+          error: "Falha no upload do arquivo.",
         });
       }
 
-      return res.status(400).json({
-        error: "Falha no upload do arquivo.",
-      });
-    }
+      if (error) {
+        return res.status(400).json({ error: error.message });
+      }
 
-    if (error) {
-      return res.status(400).json({ error: error.message });
-    }
+      if (!req.file) {
+        return res.status(400).json({ error: "Nenhum arquivo enviado." });
+      }
 
-    if (!req.file) {
-      return res.status(400).json({ error: "Nenhum arquivo enviado." });
-    }
+      const url = `approaches/${req.file.filename}`;
 
-    const url = `${req.protocol}://${req.get("host")}/uploads/approaches/${req.file.filename}`;
-
-    return res.json({ url });
-  });
-});
+      return res.json({ url });
+    });
+  }
+);

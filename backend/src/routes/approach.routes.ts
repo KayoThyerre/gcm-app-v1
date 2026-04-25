@@ -1,13 +1,58 @@
+import fs from "fs";
+import path from "path";
 import { Router } from "express";
 import { prisma } from "../prisma/client";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import { ensureRole } from "../middlewares/ensureRole";
 
 const router = Router();
+const VIEW_AND_CREATE_ROLES = ["USER", "SUPERVISOR", "ADMIN", "DEV"] as const;
+const EDIT_ROLES = ["SUPERVISOR", "ADMIN", "DEV"] as const;
+const DELETE_ROLES = ["ADMIN", "DEV"] as const;
+const approachUploadsPath = path.resolve(process.cwd(), "uploads", "approaches");
+
+function getApproachImagePath(photoUrl: string | null) {
+  if (!photoUrl) {
+    return null;
+  }
+
+  let imagePath = photoUrl.trim();
+
+  if (!imagePath) {
+    return null;
+  }
+
+  try {
+    imagePath = new URL(imagePath).pathname;
+  } catch {
+    // photoUrl can also be the internal storage key saved by new uploads.
+  }
+
+  const normalizedPath = imagePath.replace(/\\/g, "/");
+  const filename = path.basename(normalizedPath);
+
+  if (
+    !filename ||
+    (!normalizedPath.includes("/approaches/") &&
+      !normalizedPath.startsWith("approaches/"))
+  ) {
+    return null;
+  }
+
+  const resolvedPath = path.resolve(approachUploadsPath, filename);
+  const relativePath = path.relative(approachUploadsPath, resolvedPath);
+
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+    return null;
+  }
+
+  return resolvedPath;
+}
 
 router.post(
   "/",
   ensureAuthenticated,
+  ensureRole([...VIEW_AND_CREATE_ROLES]),
   async (req, res) => {
     const {
       name,
@@ -97,6 +142,7 @@ router.post(
 router.get(
   "/",
   ensureAuthenticated,
+  ensureRole([...VIEW_AND_CREATE_ROLES]),
   async (req, res) => {
     const approaches = await prisma.approach.findMany({
       orderBy: { createdAt: "desc" },
@@ -106,10 +152,42 @@ router.get(
   }
 );
 
+router.get(
+  "/:id/image",
+  ensureAuthenticated,
+  ensureRole([...VIEW_AND_CREATE_ROLES]),
+  async (req, res) => {
+    const { id } = req.params;
+
+    if (typeof id !== "string") {
+      return res.status(400).json({ message: "Invalid id" });
+    }
+
+    const approach = await prisma.approach.findUnique({
+      where: { id },
+      select: {
+        photoUrl: true,
+      },
+    });
+
+    if (!approach?.photoUrl) {
+      return res.status(404).json({ message: "Approach image not found" });
+    }
+
+    const imagePath = getApproachImagePath(approach.photoUrl);
+
+    if (!imagePath || !fs.existsSync(imagePath)) {
+      return res.status(404).json({ message: "Approach image not found" });
+    }
+
+    return res.sendFile(imagePath);
+  }
+);
+
 router.put(
   "/:id",
   ensureAuthenticated,
-  ensureRole(["SUPERVISOR", "ADMIN", "DEV"]),
+  ensureRole([...EDIT_ROLES]),
   async (req, res) => {
     const { id } = req.params;
 
@@ -238,7 +316,7 @@ router.put(
 router.delete(
   "/:id",
   ensureAuthenticated,
-  ensureRole(["ADMIN", "DEV"]),
+  ensureRole([...DELETE_ROLES]),
   async (req, res) => {
     const { id } = req.params;
 

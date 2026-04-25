@@ -35,6 +35,11 @@ export function Approaches() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { user } = useAuth();
 
+  const canCreate =
+    user?.role === "USER" ||
+    user?.role === "SUPERVISOR" ||
+    user?.role === "ADMIN" ||
+    user?.role === "DEV";
   const canEdit =
     user?.role === "SUPERVISOR" ||
     user?.role === "ADMIN" ||
@@ -65,18 +70,52 @@ export function Approaches() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!imageFile) {
-      setImagePreview(imageUrl || null);
+    if (imageFile) {
+      const previewUrl = URL.createObjectURL(imageFile);
+      setImagePreview(previewUrl);
+
+      return () => {
+        URL.revokeObjectURL(previewUrl);
+      };
+    }
+
+    if (!selectedApproach?.id || !imageUrl) {
+      setImagePreview(null);
       return;
     }
 
-    const previewUrl = URL.createObjectURL(imageFile);
-    setImagePreview(previewUrl);
+    let isCurrent = true;
+    let protectedPreviewUrl: string | null = null;
+
+    void api
+      .get<Blob>(`/approaches/${selectedApproach.id}/image`, {
+        responseType: "blob",
+      })
+      .then((response) => {
+        const nextPreviewUrl = URL.createObjectURL(response.data);
+
+        if (!isCurrent) {
+          URL.revokeObjectURL(nextPreviewUrl);
+          return;
+        }
+
+        protectedPreviewUrl = nextPreviewUrl;
+        setImagePreview(nextPreviewUrl);
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setImagePreview(null);
+        }
+      });
 
     return () => {
-      URL.revokeObjectURL(previewUrl);
+      isCurrent = false;
+
+      if (protectedPreviewUrl) {
+        URL.revokeObjectURL(protectedPreviewUrl);
+      }
     };
-  }, [imageFile, imageUrl]);
+  }, [imageFile, imageUrl, selectedApproach?.id]);
 
   useEffect(() => {
     async function loadApproaches() {
@@ -155,7 +194,7 @@ export function Approaches() {
     setNotes(approach.notes ?? "");
     setIsConvicted(approach.isConvicted);
     setImageFile(null);
-    setImagePreview(approach.photoUrl ?? null);
+    setImagePreview(null);
     setImageUrl(approach.photoUrl ?? "");
     setIsDirty(false);
     setErrorMessage(null);
@@ -202,6 +241,16 @@ export function Approaches() {
     event.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
+
+    if (mode === "edit" && !canEdit) {
+      setErrorMessage("Voce nao tem permissao para editar abordagens.");
+      return;
+    }
+
+    if (mode === "create" && !canCreate) {
+      setErrorMessage("Voce nao tem permissao para criar abordagens.");
+      return;
+    }
 
     if (!name.trim()) {
       setErrorMessage("Nome e obrigatorio.");
@@ -274,6 +323,11 @@ export function Approaches() {
   }
 
   async function handleDelete(approachId: string) {
+    if (!canDelete) {
+      setErrorMessage("Voce nao tem permissao para excluir abordagens.");
+      return;
+    }
+
     try {
       setErrorMessage(null);
       setSuccessMessage(null);
