@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { randomBytes } from "crypto";
 import rateLimit from "express-rate-limit";
 import { FIELD_LIMITS, validateMaxLength } from "../utils/validation";
+import { env } from "../config/env";
 
 export const authRoutes = Router();
 const resendVerificationLimiter = rateLimit({
@@ -72,7 +73,7 @@ authRoutes.post("/register", async (req, res) => {
   });
 
   console.log(
-    `http://localhost:3333/auth/verify-email?token=${verificationToken}`
+    `${env.API_PUBLIC_URL}/auth/verify-email?token=${verificationToken}`
   );
 
   return res.status(201).json({
@@ -185,7 +186,7 @@ authRoutes.post("/resend-verification", resendVerificationLimiter, async (req, r
   });
 
   console.log(
-    `http://localhost:3333/auth/verify-email?token=${verificationToken}`
+    `${env.API_PUBLIC_URL}/auth/verify-email?token=${verificationToken}`
   );
 
   return res.status(200).json({
@@ -250,7 +251,7 @@ authRoutes.post("/login", loginLimiter, async (req, res) => {
       sub: user.id,
       role: user.role,
     },
-    process.env.JWT_SECRET as string,
+    env.JWT_SECRET,
     {
       expiresIn: "1d",
     }

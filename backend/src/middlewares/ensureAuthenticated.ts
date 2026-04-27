@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import type { Role } from "@prisma/client";
+import { env } from "../config/env";
 
 type TokenPayload = {
   sub: string;
@@ -23,7 +24,7 @@ export function ensureAuthenticated(
   try {
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET as string
+      env.JWT_SECRET
     ) as TokenPayload;
 
     req.user = {

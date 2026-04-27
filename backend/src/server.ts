@@ -2,6 +2,7 @@ import "dotenv/config";
 import path from "path";
 import express from "express";
 import cors from "cors";
+import { env } from "./config/env";
 import { errorHandler } from "./middlewares/errorHandler";
 import { usersRoutes } from "./routes/users.routes";
 import { authRoutes } from "./routes/auth.routes";
@@ -18,12 +19,10 @@ import scaleOverrideRoutes from "./routes/scaleOverride.routes";
 const app = express();
 const uploadsPath = path.resolve(process.cwd(), "uploads");
 const newsUploadsPath = path.join(uploadsPath, "news");
-const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:5173";
-const PORT = Number(process.env.PORT) || 3333;
 
 app.use(
   cors({
-    origin: corsOrigin,
+    origin: env.CORS_ORIGIN,
   })
 );
 app.use(express.json({ limit: "1mb" }));
@@ -62,6 +61,6 @@ app.use("/scales", scaleTeamConfigRoutes);
 app.use("/scales", scaleOverrideRoutes);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+app.listen(env.PORT, () => {
+  console.log(`Servidor rodando em http://localhost:${env.PORT}`);
 });
