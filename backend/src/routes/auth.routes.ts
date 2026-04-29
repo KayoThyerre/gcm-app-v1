@@ -25,6 +25,8 @@ const resendVerificationLimiter = rateLimit({
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 4,
+  skip: (req) =>
+    env.NODE_ENV === "test" && req.headers["x-skip-rate-limit"] === "1",
   statusCode: 429,
   message: {
     error: "Muitas tentativas de login. Tente novamente mais tarde.",
