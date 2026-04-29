@@ -4,7 +4,7 @@ const isProduction = NODE_ENV === "production";
 const requiredEnvVars = [
   "DATABASE_URL",
   "JWT_SECRET",
-  ...(isProduction ? ["CORS_ORIGIN"] : []),
+  ...(isProduction ? ["CORS_ORIGIN", "API_PUBLIC_URL"] : []),
 ] as const;
 
 const missingEnvVars = requiredEnvVars.filter(

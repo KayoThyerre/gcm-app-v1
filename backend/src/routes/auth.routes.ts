@@ -8,6 +8,14 @@ import { FIELD_LIMITS, validateMaxLength } from "../utils/validation";
 import { env } from "../config/env";
 
 export const authRoutes = Router();
+function logVerificationTokenIssued(context: "register" | "resend-verification") {
+  if (!env.isProduction) {
+    console.info(
+      `[auth/${context}] Token de verificacao gerado. Link sensivel omitido dos logs.`
+    );
+  }
+}
+
 const resendVerificationLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 5,
@@ -72,9 +80,7 @@ authRoutes.post("/register", async (req, res) => {
     },
   });
 
-  console.log(
-    `${env.API_PUBLIC_URL}/auth/verify-email?token=${verificationToken}`
-  );
+  logVerificationTokenIssued("register");
 
   return res.status(201).json({
     message: "Cadastro realizado. Verifique seu e-mail para continuar.",
@@ -185,9 +191,7 @@ authRoutes.post("/resend-verification", resendVerificationLimiter, async (req, r
     },
   });
 
-  console.log(
-    `${env.API_PUBLIC_URL}/auth/verify-email?token=${verificationToken}`
-  );
+  logVerificationTokenIssued("resend-verification");
 
   return res.status(200).json({
     message: "Se o e-mail estiver cadastrado, você receberá instruções.",
