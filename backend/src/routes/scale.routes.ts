@@ -3,6 +3,7 @@ import { prisma } from "../prisma/client";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import { ensureRole } from "../middlewares/ensureRole";
 import { ShiftType } from "@prisma/client";
+import { getPagination } from "../utils/pagination";
 
 const router = Router();
 
@@ -81,12 +82,24 @@ router.get(
   "/months",
   ensureAuthenticated,
   ensureRole(["ADMIN", "DEV"]),
-  async (_req, res) => {
-    const scaleMonths = await prisma.scaleMonth.findMany({
-      orderBy: [{ year: "desc" }, { month: "desc" }],
-    });
+  async (req, res) => {
+    const { page, limit, skip } = getPagination(req.query, { maxLimit: 50 });
 
-    return res.json(scaleMonths);
+    const [scaleMonths, total] = await Promise.all([
+      prisma.scaleMonth.findMany({
+        orderBy: [{ year: "desc" }, { month: "desc" }],
+        skip,
+        take: limit,
+      }),
+      prisma.scaleMonth.count(),
+    ]);
+
+    return res.json({
+      data: scaleMonths,
+      total,
+      page,
+      limit,
+    });
   }
 );
 

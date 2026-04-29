@@ -5,6 +5,7 @@ import { prisma } from "../prisma/client";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import { ensureRole } from "../middlewares/ensureRole";
 import { FIELD_LIMITS, validateMaxLength } from "../utils/validation";
+import { getPagination } from "../utils/pagination";
 
 const router = Router();
 const VIEW_AND_CREATE_ROLES = ["USER", "SUPERVISOR", "ADMIN", "DEV"] as const;
@@ -157,11 +158,23 @@ router.get(
   ensureAuthenticated,
   ensureRole([...VIEW_AND_CREATE_ROLES]),
   async (req, res) => {
-    const approaches = await prisma.approach.findMany({
-      orderBy: { createdAt: "desc" },
-    });
+    const { page, limit, skip } = getPagination(req.query, { maxLimit: 25 });
 
-    return res.json(approaches);
+    const [approaches, total] = await Promise.all([
+      prisma.approach.findMany({
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.approach.count(),
+    ]);
+
+    return res.json({
+      data: approaches,
+      total,
+      page,
+      limit,
+    });
   }
 );
 

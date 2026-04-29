@@ -1,9 +1,13 @@
 import { api } from "../services/api";
 import type { User } from "../types/User";
 
+type UsersListResponse = {
+  data: User[];
+};
+
 export async function getUsers(): Promise<User[]> {
-  const response = await api.get<User[]>("/users");
-  return response.data;
+  const response = await api.get<UsersListResponse>("/users");
+  return response.data.data;
 }
 
 export async function approveUser(userId: string): Promise<User> {

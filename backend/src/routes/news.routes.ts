@@ -4,6 +4,7 @@ import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import { ensureRole } from "../middlewares/ensureRole";
 import { generateSlug } from "../utils/slug";
 import { FIELD_LIMITS, validateMaxLength } from "../utils/validation";
+import { getPagination } from "../utils/pagination";
 
 export const newsRoutes = Router();
 
@@ -57,25 +58,22 @@ newsRoutes.post(
 );
 
 newsRoutes.get("/", async (req, res) => {
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
-  const safePage = page < 1 ? 1 : page;
-  const safeLimit = limit < 1 ? 10 : limit;
+  const { page, limit, skip } = getPagination(req.query, { maxLimit: 50 });
 
   const [total, news] = await Promise.all([
     prisma.news.count({ where: { published: true } }),
     prisma.news.findMany({
       where: { published: true },
       orderBy: { createdAt: "desc" },
-      skip: (safePage - 1) * safeLimit,
-      take: safeLimit,
+      skip,
+      take: limit,
     }),
   ]);
 
   return res.json({
     total,
-    page: safePage,
-    limit: safeLimit,
+    page,
+    limit,
     data: news,
   });
 });
@@ -85,17 +83,13 @@ newsRoutes.get(
   ensureAuthenticated,
   ensureRole(["ADMIN"]),
   async (req, res) => {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
-    const safePage = page < 1 ? 1 : page;
-    const safeLimit = limit < 1 ? 10 : limit;
-    const skip = (safePage - 1) * safeLimit;
+    const { page, limit, skip } = getPagination(req.query, { maxLimit: 50 });
 
     const [data, total] = await Promise.all([
       prisma.news.findMany({
         orderBy: { createdAt: "desc" },
         skip,
-        take: safeLimit,
+        take: limit,
       }),
       prisma.news.count(),
     ]);
@@ -103,8 +97,8 @@ newsRoutes.get(
     return res.json({
       data,
       total,
-      page: safePage,
-      limit: safeLimit,
+      page,
+      limit,
     });
   }
 );

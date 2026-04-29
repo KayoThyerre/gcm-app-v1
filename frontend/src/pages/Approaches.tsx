@@ -23,6 +23,10 @@ type Approach = {
   updatedAt: string;
 };
 
+type ApproachListResponse = {
+  data: Approach[];
+};
+
 function formatBirthDate(date: string | null) {
   if (!date) {
     return "";
@@ -121,8 +125,8 @@ export function Approaches() {
     async function loadApproaches() {
       try {
         setErrorMessage(null);
-        const response = await api.get<Approach[]>("/approaches");
-        setApproaches(response.data);
+        const response = await api.get<ApproachListResponse>("/approaches");
+        setApproaches(response.data.data);
       } catch {
         setErrorMessage("Nao foi possivel carregar as abordagens.");
       } finally {

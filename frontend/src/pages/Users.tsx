@@ -9,13 +9,17 @@ type User = {
   role: string;
 };
 
+type UsersListResponse = {
+  data: User[];
+};
+
 export function Users() {
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
     async function fetchUsers() {
-      const response = await api.get("/users");
-      setUsers(response.data);
+      const response = await api.get<UsersListResponse>("/users");
+      setUsers(response.data.data);
     }
 
     void fetchUsers();

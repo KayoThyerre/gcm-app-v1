@@ -19,6 +19,10 @@ type ScaleMonth = {
   updatedAt: string;
 };
 
+type ScaleMonthListResponse = {
+  data: ScaleMonth[];
+};
+
 type ApiErrorLike = {
   response?: {
     status?: number;
@@ -242,9 +246,9 @@ export function Scales() {
   );
 
   async function loadScaleMonths() {
-    const response = await api.get<ScaleMonth[]>("/scales/months");
-    setScaleMonths(response.data);
-    return response.data;
+    const response = await api.get<ScaleMonthListResponse>("/scales/months");
+    setScaleMonths(response.data.data);
+    return response.data.data;
   }
 
   useEffect(() => {

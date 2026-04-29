@@ -14,6 +14,10 @@ type ScaleMonth = {
   updatedAt: string;
 };
 
+type ScaleMonthListResponse = {
+  data: ScaleMonth[];
+};
+
 type ApiErrorLike = {
   response?: {
     data?: {
@@ -72,11 +76,11 @@ export function ScaleView() {
       try {
         setLoadingMonths(true);
         setErrorMessage(null);
-        const response = await api.get<ScaleMonth[]>("/scales/months");
-        setScaleMonths(response.data);
+        const response = await api.get<ScaleMonthListResponse>("/scales/months");
+        setScaleMonths(response.data.data);
 
-        if (response.data.length > 0) {
-          setSelectedScaleMonthId(response.data[0].id);
+        if (response.data.data.length > 0) {
+          setSelectedScaleMonthId(response.data.data[0].id);
         }
       } catch (error) {
         setErrorMessage(getApiMessage(error, "Nao foi possivel carregar os meses de escala."));

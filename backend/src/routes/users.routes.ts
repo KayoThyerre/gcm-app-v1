@@ -5,6 +5,7 @@ import { Status } from "@prisma/client";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import { ensureRole } from "../middlewares/ensureRole";
 import { FIELD_LIMITS, validateMaxLength } from "../utils/validation";
+import { getPagination } from "../utils/pagination";
 
 export const usersRoutes = Router();
 
@@ -13,18 +14,31 @@ usersRoutes.get(
   ensureAuthenticated,
   ensureRole(["ADMIN"]),
   async (req, res) => {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        status: true,
-        createdAt: true,
-      },
-    });
+    const { page, limit, skip } = getPagination(req.query, { maxLimit: 25 });
 
-    return res.json(users);
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          status: true,
+          createdAt: true,
+        },
+      }),
+      prisma.user.count(),
+    ]);
+
+    return res.json({
+      data: users,
+      total,
+      page,
+      limit,
+    });
   }
 );
 

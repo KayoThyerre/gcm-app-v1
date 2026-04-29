@@ -17,6 +17,10 @@ type Approach = {
   updatedAt: string;
 };
 
+type ApproachListResponse = {
+  data: Approach[];
+};
+
 const itemsPerPage = 5;
 
 function formatDate(date: string | null) {
@@ -46,9 +50,9 @@ export function ApproachedList() {
   useEffect(() => {
     async function loadApproaches() {
       try {
-        const response = await api.get<Approach[]>("/approaches");
-        setApproaches(response.data);
-        setSelectedApproach(response.data[0] ?? null);
+        const response = await api.get<ApproachListResponse>("/approaches");
+        setApproaches(response.data.data);
+        setSelectedApproach(response.data.data[0] ?? null);
       } catch {
         setApproaches([]);
         setSelectedApproach(null);
