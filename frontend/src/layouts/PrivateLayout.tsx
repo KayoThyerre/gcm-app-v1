@@ -1,5 +1,24 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
+  BarChart3,
+  CalendarDays,
+  ChevronRight,
+  ClipboardList,
+  LogOut,
+  Menu,
+  Moon,
+  Newspaper,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Search,
+  Settings,
+  ShieldCheck,
+  Sun,
+  User,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../hooks/useTheme";
 import type { UserRole } from "../types/User";
@@ -7,51 +26,66 @@ import type { UserRole } from "../types/User";
 type SidebarItem = {
   label: string;
   path: string;
-  icon: string;
+  icon: LucideIcon;
   roles?: UserRole[];
 };
 
 const MAIN_SIDEBAR_ITEMS: SidebarItem[] = [
   {
-    label: "Dashboard",
+    label: "Painel",
     path: "/home",
-    icon: "📊",
+    icon: BarChart3,
     roles: ["ADMIN", "USER", "SUPERVISOR", "DEV"],
   },
-  { label: "Users", path: "/dashboard/admin/users", icon: "📊", roles: ["ADMIN"] },
-  { label: "News", path: "/home/news", icon: "N", roles: ["ADMIN"] },
-  { label: "Escalas", path: "/home/scales", icon: "S", roles: ["ADMIN", "DEV"] },
   {
-    label: "Scale View",
+    label: "Usuários",
+    path: "/dashboard/admin/users",
+    icon: Users,
+    roles: ["ADMIN"],
+  },
+  {
+    label: "Notícias",
+    path: "/home/news",
+    icon: Newspaper,
+    roles: ["ADMIN"],
+  },
+  {
+    label: "Escalas",
+    path: "/home/scales",
+    icon: CalendarDays,
+    roles: ["ADMIN", "DEV"],
+  },
+  {
+    label: "Consultar escala",
     path: "/home/scale-view",
-    icon: "📅",
+    icon: ClipboardList,
     roles: ["ADMIN", "USER", "SUPERVISOR", "DEV"],
   },
   {
     label: "Abordagens",
     path: "/home/approaches",
-    icon: "👤",
+    icon: User,
     roles: ["ADMIN", "USER", "SUPERVISOR", "DEV"],
   },
   {
     label: "Abordados",
     path: "/home/abordados",
-    icon: "🔎",
+    icon: Search,
     roles: ["ADMIN", "USER", "SUPERVISOR", "DEV"],
   },
 ];
 
 const SETTINGS_SIDEBAR_ITEMS: SidebarItem[] = [
   {
-    label: "Profile",
+    label: "Perfil",
     path: "/settings/profile",
-    icon: "🪪",
+    icon: User,
     roles: ["ADMIN", "USER", "SUPERVISOR", "DEV"],
   },
   {
-    label: "Security",
+    label: "Segurança",
     path: "/settings/security",
-    icon: "🔒",
+    icon: ShieldCheck,
     roles: ["ADMIN", "USER", "SUPERVISOR", "DEV"],
   },
 ];
@@ -60,6 +94,7 @@ type HeaderAction = {
   label: string;
   onClick: () => void;
   variant?: "default" | "danger";
+  icon?: LucideIcon;
 };
 
 export function PrivateLayout() {
@@ -97,15 +132,21 @@ export function PrivateLayout() {
       label: "Sair",
       onClick: handleLogout,
       variant: "danger",
+      icon: LogOut,
     },
   ];
 
+  function handleNavigate(path: string) {
+    navigate(path);
+    setSidebarOpen(false);
+  }
+
   function isActive(path: string) {
     if (path === "/home") {
-      return location.pathname === "/home" || location.pathname.startsWith("/home/");
+      return location.pathname === "/home";
     }
 
-    return location.pathname.startsWith(path);
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   }
 
   function renderSidebarItems(items: SidebarItem[], itemPaddingClass = "") {
@@ -113,23 +154,25 @@ export function PrivateLayout() {
       .filter((item) => item.roles?.includes((user?.role as UserRole) ?? "USER"))
       .map((item) => {
         const active = isActive(item.path);
+        const Icon = item.icon;
 
         return (
-          <div key={item.path} className="relative group">
+          <div key={item.path} className="group relative">
             <button
-              onClick={() => navigate(item.path)}
-              className={`flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg transition-all duration-200 w-full hover:bg-blue-100 hover:translate-x-1 hover:shadow-sm dark:hover:bg-blue-600/20 ${
+              type="button"
+              onClick={() => handleNavigate(item.path)}
+              className={`flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/40 dark:hover:text-blue-200 ${
                 active
-                  ? "bg-blue-50 text-blue-600 font-medium dark:bg-blue-900/40 dark:text-blue-300"
+                  ? "bg-blue-50 font-medium text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900/60"
                   : "text-slate-600 dark:text-slate-300"
               } ${itemPaddingClass}`}
             >
-              <span>{item.icon}</span>
-              {!sidebarCollapsed && <span>{item.label}</span>}
+              <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
             </button>
 
             {sidebarCollapsed && (
-              <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-slate-900 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition pointer-events-none">
+              <span className="pointer-events-none absolute left-full top-1/2 z-40 ml-3 -translate-y-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-xs text-white opacity-0 shadow-lg transition group-hover:opacity-100">
                 {item.label}
               </span>
             )}
@@ -140,43 +183,71 @@ export function PrivateLayout() {
 
   return (
     <div className="min-h-screen bg-[url('/bg-light.png')] bg-cover bg-center bg-no-repeat dark:bg-[url('/bg-dark.png')]">
-      <div className="min-h-screen bg-blue-50/40 dark:bg-black/40 flex flex-col">
-        <header className="h-16 bg-white/70 dark:bg-slate-900/80 backdrop-blur-md border-b border-blue-200/40 dark:border-slate-800 flex items-center justify-between px-3 sm:px-4 md:px-6">
-          <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex min-h-screen flex-col bg-blue-50/40 dark:bg-black/40">
+        <header className="flex h-16 items-center justify-between border-b border-blue-200/50 bg-white/80 px-3 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/85 sm:px-4 md:px-6">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <button
+              type="button"
               onClick={() => setSidebarOpen(true)}
-              className="md:hidden text-slate-600 dark:text-slate-300"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-blue-50 hover:text-blue-700 dark:text-slate-300 dark:hover:bg-slate-800 md:hidden"
+              aria-label="Abrir menu"
             >
-              ☰
+              <Menu className="h-5 w-5" aria-hidden="true" />
             </button>
 
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              Auth Template
-            </h1>
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-900/20">
+                GCM
+              </div>
+              <div className="min-w-0">
+                <h1 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100 sm:text-lg">
+                  Sistema Administrativo
+                </h1>
+                <p className="hidden text-xs text-slate-500 dark:text-slate-400 sm:block">
+                  Guarda Civil Municipal
+                </p>
+              </div>
+            </div>
 
             <button
+              type="button"
               onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className="hidden md:flex text-slate-600 dark:text-slate-300 hover:text-blue-600 transition"
+              className="hidden h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-blue-50 hover:text-blue-700 dark:text-slate-300 dark:hover:bg-slate-800 md:inline-flex"
+              aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
             >
-              {sidebarCollapsed ? "➡️" : "⬅️"}
+              {sidebarCollapsed ? (
+                <PanelLeftOpen className="h-5 w-5" aria-hidden="true" />
+              ) : (
+                <PanelLeftClose className="h-5 w-5" aria-hidden="true" />
+              )}
             </button>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="hidden sm:flex px-3 py-1 rounded-md cursor-pointer transition hover:bg-slate-200 dark:hover:bg-slate-700/40 text-sm text-slate-700 dark:text-slate-200"
+              className="hidden h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 sm:inline-flex"
             >
-              {theme === "dark" ? "☀ Light" : "🌙 Dark"}
+              {theme === "dark" ? (
+                <>
+                  <Sun className="h-4 w-4" aria-hidden="true" />
+                  Tema claro
+                </>
+              ) : (
+                <>
+                  <Moon className="h-4 w-4" aria-hidden="true" />
+                  Tema escuro
+                </>
+              )}
             </button>
 
             <button
               type="button"
-              onClick={() => navigate("/settings/profile")}
-              className="group flex items-center gap-2 cursor-pointer rounded-lg px-2 py-2 transition-all duration-200 hover:bg-blue-100 dark:hover:bg-blue-600/20 sm:gap-3 sm:px-3"
+              onClick={() => handleNavigate("/settings/profile")}
+              className="group flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-950/40 sm:gap-3 sm:px-3"
             >
-              <div className="text-right hidden sm:block">
+              <div className="hidden text-right sm:block">
                 <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
                   {user?.name}
                 </p>
@@ -189,93 +260,115 @@ export function PrivateLayout() {
                 <img
                   src={userAvatarUrl}
                   alt="Avatar do usuario"
-                  className="w-9 h-9 rounded-full object-cover hover:ring-2 hover:ring-blue-400 transition-transform duration-200 group-hover:scale-105"
+                  className="h-9 w-9 rounded-full object-cover transition-transform duration-200 group-hover:scale-105 group-hover:ring-2 group-hover:ring-blue-400"
                 />
               ) : (
-                <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold hover:ring-2 hover:ring-blue-400 transition-transform duration-200 group-hover:scale-105">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 font-semibold text-white transition-transform duration-200 group-hover:scale-105 group-hover:ring-2 group-hover:ring-blue-400">
                   {userInitial}
                 </div>
               )}
             </button>
 
             <div className="flex items-center gap-2">
-              {headerActions.map((action) => (
-                <button
-                  key={action.label}
-                  onClick={action.onClick}
-                  className={`text-sm transition ${
-                    action.variant === "danger"
-                      ? "text-slate-600 dark:text-slate-400 hover:text-red-500"
-                      : "text-slate-600 dark:text-slate-400 hover:text-blue-600"
-                  }`}
-                >
-                  {action.label}
-                </button>
-              ))}
+              {headerActions.map((action) => {
+                const Icon = action.icon;
+
+                return (
+                  <button
+                    key={action.label}
+                    type="button"
+                    onClick={action.onClick}
+                    className={`inline-flex h-9 items-center gap-2 rounded-lg px-2 text-sm transition sm:px-3 ${
+                      action.variant === "danger"
+                        ? "text-slate-600 hover:bg-red-50 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
+                        : "text-slate-600 hover:bg-blue-50 hover:text-blue-700 dark:text-slate-400 dark:hover:bg-blue-950/40 dark:hover:text-blue-200"
+                    }`}
+                  >
+                    {Icon ? <Icon className="h-4 w-4" aria-hidden="true" /> : null}
+                    <span className="hidden sm:inline">{action.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </header>
 
-        <div className="flex flex-1 relative">
+        <div className="relative flex flex-1">
           {sidebarOpen && (
-            <div
+            <button
+              type="button"
               onClick={() => setSidebarOpen(false)}
-              className="fixed inset-0 bg-black/30 z-20 md:hidden"
+              className="fixed inset-0 z-20 bg-black/30 md:hidden"
+              aria-label="Fechar menu"
             />
           )}
 
           <aside
             className={`
-              fixed z-30 inset-y-0 left-0
-              w-72 max-w-[85vw] bg-white/70 dark:bg-slate-950 backdrop-blur-md border-r border-blue-200/40 dark:border-slate-800 px-3 py-5 sm:px-4 sm:py-6
+              fixed inset-y-0 left-0 z-30
+              w-72 max-w-[85vw] border-r border-blue-200/50 bg-white/85 px-3 py-5 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/95 sm:px-4 sm:py-6
               transform transition-all duration-300
               ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
               md:static md:translate-x-0
               ${sidebarCollapsed ? "md:w-16" : "md:w-60"}
             `}
           >
-            <nav className="flex flex-col gap-2">
-              {renderSidebarItems(MAIN_SIDEBAR_ITEMS)}
-
-              <div className="relative group">
-                <button
-                  type="button"
-                  onClick={() => setSettingsOpen((prev) => !prev)}
-                  className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg transition-all duration-200 w-full cursor-pointer hover:bg-blue-100 hover:translate-x-1 hover:shadow-sm dark:hover:bg-blue-600/20 ${
-                    isSettingsRoute
-                      ? "bg-blue-50 text-blue-600 font-medium dark:bg-blue-900/40 dark:text-blue-300"
-                      : "text-slate-600 dark:text-slate-300"
-                  }`}
-                >
-                  <span className="flex items-center gap-3">
-                    <span>⚙️</span>
-                    {!sidebarCollapsed && <span>Settings</span>}
-                  </span>
-                  {!sidebarCollapsed && (
-                    <span
-                      className={`transition-transform duration-200 ${
-                        settingsOpen ? "rotate-90" : "rotate-0"
-                      }`}
-                    >
-                      ▶
-                    </span>
-                  )}
-                </button>
-
-                {sidebarCollapsed && (
-                  <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-slate-900 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition pointer-events-none">
-                    Settings
-                  </span>
+            <nav className="flex flex-col gap-5">
+              <div className="space-y-1">
+                {!sidebarCollapsed && (
+                  <p className="px-3 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    Navegação
+                  </p>
                 )}
+                <div className="flex flex-col gap-1">
+                  {renderSidebarItems(MAIN_SIDEBAR_ITEMS)}
+                </div>
               </div>
 
-              {settingsOpen && renderSidebarItems(SETTINGS_SIDEBAR_ITEMS, "pl-6")}
+              <div className="space-y-1">
+                <div className="group relative">
+                  <button
+                    type="button"
+                    onClick={() => setSettingsOpen((prev) => !prev)}
+                    className={`flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/40 dark:hover:text-blue-200 ${
+                      isSettingsRoute
+                        ? "bg-blue-50 font-medium text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900/60"
+                        : "text-slate-600 dark:text-slate-300"
+                    }`}
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      <Settings className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      {!sidebarCollapsed && <span>Configurações</span>}
+                    </span>
+                    {!sidebarCollapsed && (
+                      <ChevronRight
+                        className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                          settingsOpen ? "rotate-90" : "rotate-0"
+                        }`}
+                        aria-hidden="true"
+                      />
+                    )}
+                  </button>
+
+                  {sidebarCollapsed && (
+                    <span className="pointer-events-none absolute left-full top-1/2 z-40 ml-3 -translate-y-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-xs text-white opacity-0 shadow-lg transition group-hover:opacity-100">
+                      Configurações
+                    </span>
+                  )}
+                </div>
+
+                {settingsOpen ? (
+                  <div className="flex flex-col gap-1">
+                    {renderSidebarItems(SETTINGS_SIDEBAR_ITEMS, sidebarCollapsed ? "" : "pl-6")}
+                  </div>
+                ) : null}
+              </div>
             </nav>
           </aside>
 
           <main className="min-w-0 flex-1 p-3 sm:p-6">
             <div className="mx-auto min-w-0 max-w-7xl">
-              <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl shadow-blue-900/5 dark:shadow-black/40 border border-blue-200/40 dark:border-slate-700 p-3 h-full sm:p-6">
+              <div className="h-full rounded-lg border border-blue-200/40 bg-white p-3 shadow-xl shadow-blue-900/5 dark:border-slate-700 dark:bg-slate-800 dark:shadow-black/40 sm:p-6">
                 <Outlet />
               </div>
             </div>
