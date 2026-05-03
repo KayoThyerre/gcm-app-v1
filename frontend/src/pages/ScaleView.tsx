@@ -153,7 +153,7 @@ export function ScaleView() {
           @media print {
             @page {
               size: A4 landscape;
-              margin: 5mm;
+              margin: 1mm;
             }
 
             html,
@@ -224,8 +224,8 @@ export function ScaleView() {
               min-width: 0 !important;
               max-width: 100% !important;
               border-collapse: collapse !important;
-              font-size: 5.5px !important;
-              line-height: 1 !important;
+              font-size: 5px !important;
+              line-height: 0.95 !important;
               table-layout: fixed !important;
             }
 
@@ -234,7 +234,7 @@ export function ScaleView() {
             }
 
             [data-scale-calendar-root="true"] {
-              gap: 2px !important;
+              gap: 1px !important;
               border: 0 !important;
               border-radius: 0 !important;
               padding: 0 !important;
@@ -245,8 +245,8 @@ export function ScaleView() {
               display: grid !important;
               grid-template-columns: minmax(0, 1fr) auto !important;
               align-items: end !important;
-              gap: 2px !important;
-              margin-bottom: 1px !important;
+              gap: 1px !important;
+              margin-bottom: 0 !important;
             }
 
             [data-scale-calendar-root="true"] h2 {
@@ -315,8 +315,8 @@ export function ScaleView() {
               cursor: default !important;
               min-height: 0 !important;
               height: auto !important;
-              padding: 1px 2px !important;
-              line-height: 1 !important;
+              padding: 0 !important;
+              line-height: 0.9 !important;
             }
 
             [data-print-section] .sticky {
@@ -324,22 +324,26 @@ export function ScaleView() {
             }
 
             [data-column="name"] {
-              width: 48px !important;
-              min-width: 48px !important;
-              max-width: 48px !important;
+              width: 36px !important;
+              min-width: 36px !important;
+              max-width: 36px !important;
               padding-left: 0 !important;
               padding-right: 0 !important;
+              font-size: 4.7px !important;
+              line-height: 0.95 !important;
               white-space: nowrap !important;
               overflow: hidden !important;
-              text-overflow: clip !important;
+              text-overflow: ellipsis !important;
             }
 
             [data-column="role"] {
-              width: 18px !important;
-              min-width: 18px !important;
-              max-width: 18px !important;
+              width: 16px !important;
+              min-width: 16px !important;
+              max-width: 16px !important;
               padding-left: 0 !important;
               padding-right: 0 !important;
+              font-size: 4.1px !important;
+              line-height: 0.9 !important;
               white-space: nowrap !important;
               overflow: hidden !important;
               text-overflow: clip !important;
@@ -355,55 +359,61 @@ export function ScaleView() {
             }
 
             [data-scale-table="true"] tr td[colspan] > div {
-              padding: 0 0.5px !important;
-              gap: 1px !important;
+              min-height: 5px !important;
+              padding: 0 0.25px !important;
+              gap: 0.5px !important;
             }
 
             [data-scale-table="true"] tr td[colspan] span:first-child {
-              height: 6px !important;
-              width: 2px !important;
+              height: 4px !important;
+              width: 1px !important;
+            }
+
+            [data-scale-table="true"] tr td[colspan] span:last-child {
+              font-size: 4.8px !important;
+              line-height: 0.9 !important;
             }
 
             [data-scale-table="true"] th:not([data-column]),
             [data-scale-table="true"] td:not([data-column]) {
-              min-width: 5.9mm !important;
-              width: 5.9mm !important;
-              max-width: 5.9mm !important;
+              min-width: 5.6mm !important;
+              width: 5.6mm !important;
+              max-width: 5.6mm !important;
               padding-left: 0 !important;
               padding-right: 0 !important;
             }
 
             [data-scale-table="true"] thead th:not([data-column]) {
               font-size: 4.3px !important;
-              line-height: 1 !important;
+              line-height: 0.9 !important;
               padding-top: 0 !important;
               padding-bottom: 0 !important;
-              height: 8px !important;
+              height: 6px !important;
             }
 
             [data-scale-table="true"] tbody td:not([data-column]) button {
-              min-height: 8px !important;
-              height: 8px !important;
+              min-height: 6px !important;
+              height: 6px !important;
               width: 100% !important;
-              font-size: 4.4px !important;
-              line-height: 0.95 !important;
+              font-size: 4px !important;
+              line-height: 0.85 !important;
               padding: 0 !important;
               border-width: 0.5px !important;
-              border-radius: 1px !important;
+              border-radius: 0 !important;
             }
 
             [data-scale-table="true"] tbody tr {
-              height: 9px !important;
+              height: 7px !important;
             }
 
             [data-scale-table="true"] thead tr:first-child th:not([data-column]) {
-              font-size: 4.6px !important;
-              height: 8px !important;
+              font-size: 4.3px !important;
+              height: 6px !important;
             }
 
             [data-scale-table="true"] thead tr:last-child th:not([data-column]) {
-              font-size: 3.8px !important;
-              height: 6px !important;
+              font-size: 3.5px !important;
+              height: 5px !important;
               letter-spacing: -0.1px !important;
             }
 

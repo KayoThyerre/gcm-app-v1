@@ -3,6 +3,7 @@ import path from "path";
 import { Router } from "express";
 import multer from "multer";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
+import { ensureRole } from "../middlewares/ensureRole";
 
 export const uploadNewsRoutes = Router();
 
@@ -41,6 +42,7 @@ const upload = multer({
 uploadNewsRoutes.post(
   "/",
   ensureAuthenticated,
+  ensureRole(["ADMIN"]),
   (req, res) => {
     upload.single("image")(req, res, (error) => {
       if (error instanceof multer.MulterError) {

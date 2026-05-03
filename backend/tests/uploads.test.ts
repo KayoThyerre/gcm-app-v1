@@ -138,7 +138,7 @@ describe("uploads", () => {
       );
     });
 
-    it("permite USER enviar imagem de noticia pela regra atual", async () => {
+    it("bloqueia USER ao enviar imagem de noticia", async () => {
       const response = await request(app)
         .post("/upload/news")
         .set("Authorization", authHeader("USER", "upload-news-user"))
@@ -147,10 +147,8 @@ describe("uploads", () => {
           contentType: "image/png",
         });
 
-      expect(response.status).toBe(200);
-      expect(response.body.url).toEqual(
-        expect.stringContaining("/uploads/news/news-upload-news-user-")
-      );
+      expect(response.status).toBe(403);
+      expect(response.body.error).toBe("Acesso negado");
     });
 
     it("falha com MIME invalido", async () => {
