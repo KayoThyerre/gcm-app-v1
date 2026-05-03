@@ -4,6 +4,7 @@ import {
   type ScaleCellOverride,
   type ScaleTeamConfig,
 } from "../components/scales/ScaleCalendarView";
+import { ScalePrintView } from "../components/scales/ScalePrintView";
 import { api } from "../services/api";
 
 type ScaleMonth = {
@@ -150,10 +151,14 @@ export function ScaleView() {
     <>
       <style>
         {`
+          [data-print-root] {
+            display: none;
+          }
+
           @media print {
             @page {
               size: A4 landscape;
-              margin: 10mm;
+              margin: 4mm;
             }
 
             html,
@@ -174,6 +179,7 @@ export function ScaleView() {
             }
 
             [data-print-root] {
+              display: block !important;
               position: absolute;
               inset: 0;
               width: 100%;
@@ -185,54 +191,19 @@ export function ScaleView() {
               overflow: visible !important;
             }
 
-            [data-print-hide] {
-              display: none !important;
-            }
-
-            [data-print-card],
-            [data-print-section] {
-              background: #ffffff !important;
-              color: #111827 !important;
-              width: 100% !important;
-              max-width: 100% !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              border: 0 !important;
-              box-shadow: none !important;
-            }
-
-            [data-scale-table-wrapper="true"] {
-              overflow: visible !important;
-            }
-
-            [data-scale-table="true"] tr,
-            [data-scale-table="true"] thead,
-            [data-scale-table="true"] tbody {
+            [data-print-root] table,
+            [data-print-root] tr,
+            [data-print-root] thead,
+            [data-print-root] tbody,
+            [data-print-root] footer {
               break-inside: avoid;
-              page-break-inside: avoid;
-            }
-
-            [data-print-section] tr,
-            [data-print-section] td,
-            [data-print-section] th,
-            [data-print-section] button {
-              color: inherit !important;
-              cursor: default !important;
-            }
-
-            [data-scale-vacation="true"] {
-              display: none !important;
-            }
-
-            [data-scale-legend="true"] {
-              break-inside: avoid-page;
               page-break-inside: avoid;
             }
           }
         `}
       </style>
 
-      <div data-print-root className="max-w-7xl mx-auto p-4 space-y-8 sm:p-8">
+      <div data-screen-root className="max-w-7xl mx-auto p-4 space-y-8 sm:p-8">
       <div data-print-hide className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
@@ -328,6 +299,18 @@ export function ScaleView() {
         </div>
       ) : null}
       </div>
+
+      {!loadingMonths && selectedScaleMonth ? (
+        <div data-print-root>
+          <ScalePrintView
+            teamConfigs={teamConfigs}
+            month={selectedScaleMonth.month}
+            year={selectedScaleMonth.year}
+            cellOverrides={cellOverrides}
+            selectedLabel={selectedLabel}
+          />
+        </div>
+      ) : null}
     </>
   );
 }

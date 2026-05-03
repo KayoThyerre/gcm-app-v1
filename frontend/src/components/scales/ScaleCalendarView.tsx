@@ -40,13 +40,13 @@ export type ScaleCellOverride = {
   updatedAt?: string;
 };
 
-type CalendarDay = {
+export type CalendarDay = {
   day: number;
   weekday: string;
   isWeekend: boolean;
 };
 
-type ScaleRow = {
+export type ScaleRow = {
   groupTitle: string;
   groupAccentClass: string;
   scaleMonthId: string;
@@ -111,7 +111,7 @@ function normalizeKeyPart(value: string) {
   return value.trim();
 }
 
-function getOverrideKey(scaleMonthId: string, teamName: string, personKey: string, day: number) {
+export function getOverrideKey(scaleMonthId: string, teamName: string, personKey: string, day: number) {
   return [
     normalizeKeyPart(scaleMonthId),
     normalizeKeyPart(teamName),
@@ -124,7 +124,7 @@ function getPersonLookupKey(teamName: string, personKey: string) {
   return [normalizeKeyPart(teamName), normalizeKeyPart(personKey)].join("::");
 }
 
-function buildCalendarDays(month: number, year: number): CalendarDay[] {
+export function buildCalendarDays(month: number, year: number): CalendarDay[] {
   const daysInMonth = new Date(year, month, 0).getDate();
 
   return Array.from({ length: daysInMonth }, (_, index) => {
@@ -140,13 +140,13 @@ function buildCalendarDays(month: number, year: number): CalendarDay[] {
   });
 }
 
-function getBaseCycleValue(initialCycle: InitialCycle | undefined, dayIndex: number): ScaleCellValue {
+export function getBaseCycleValue(initialCycle: InitialCycle | undefined, dayIndex: number): ScaleCellValue {
   const startIndex = cycleOrder.indexOf(initialCycle || "DAY");
   const safeStartIndex = startIndex >= 0 ? startIndex : 0;
   return cycleOrder[(safeStartIndex + dayIndex) % cycleOrder.length];
 }
 
-function buildRows(teamConfigs: ScaleTeamConfig[]) {
+export function buildRows(teamConfigs: ScaleTeamConfig[]) {
   const orderedConfigs = teamOrder
     .map((teamName) => teamConfigs.find((config) => config.teamName === teamName))
     .filter((config): config is ScaleTeamConfig => Boolean(config));
@@ -521,7 +521,7 @@ export function ScaleCalendarView({
       {vacationSummaries.length > 0 ? (
         <section
           data-scale-vacation="true"
-          className="hidden rounded-lg border border-cyan-200 bg-cyan-50/70 p-4 dark:border-cyan-900/70 dark:bg-cyan-950/20 sm:block"
+          className="rounded-lg border border-cyan-200 bg-cyan-50/70 p-3 dark:border-cyan-900/70 dark:bg-cyan-950/20 sm:p-4"
         >
           <div className="space-y-1">
             <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Ferias</h3>
@@ -530,17 +530,88 @@ export function ScaleCalendarView({
             </p>
           </div>
 
-          <div className="mt-4 space-y-2">
-            {vacationSummaries.map((summary) => (
-              <div
-                key={summary.key}
-                className="rounded-md border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-              >
-                <span className="font-medium text-slate-900 dark:text-slate-100">{summary.personName}</span>
-                <span className="text-slate-500 dark:text-slate-400"> | Equipe {summary.teamName} | dias: </span>
-                <span className="font-medium text-cyan-700 dark:text-cyan-300">{summary.days.join(", ")}</span>
-              </div>
-            ))}
+          <div className="mt-4 w-full overflow-x-auto rounded-lg border border-cyan-200 dark:border-cyan-900/70">
+            <table className="min-w-[1650px] border-collapse text-xs sm:min-w-[1850px]">
+              <thead>
+                <tr>
+                  <th className="w-[104px] min-w-[104px] border border-cyan-200 bg-cyan-100 px-1.5 py-2 text-left font-bold uppercase text-cyan-900 dark:border-cyan-900/70 dark:bg-cyan-950/60 dark:text-cyan-100 sm:w-[180px] sm:min-w-[180px] sm:px-3">
+                    Nome
+                  </th>
+                  <th className="w-[56px] min-w-[56px] border border-cyan-200 bg-cyan-100 px-1 py-2 text-left font-bold uppercase text-cyan-900 dark:border-cyan-900/70 dark:bg-cyan-950/60 dark:text-cyan-100 sm:w-[140px] sm:min-w-[140px] sm:px-3">
+                    Func.
+                  </th>
+                  {days.map((dayItem) => (
+                    <th
+                      key={`vacation-day-${dayItem.day}`}
+                      className={
+                        "w-[3rem] min-w-[3rem] border px-2 py-1 text-center font-bold dark:border-cyan-900/70 " +
+                        (dayItem.isWeekend
+                          ? "border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-200"
+                          : "border-cyan-200 bg-white text-cyan-800 dark:bg-slate-900 dark:text-cyan-200")
+                      }
+                    >
+                      {dayItem.day}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {vacationSummaries.map((summary) => (
+                  <tr key={summary.key}>
+                    <td className="max-w-[104px] overflow-hidden text-ellipsis whitespace-nowrap border border-cyan-200 bg-white px-1.5 py-2 font-medium text-slate-900 dark:border-cyan-900/70 dark:bg-slate-900 dark:text-slate-100 sm:max-w-none sm:px-3">
+                      {summary.personName}
+                    </td>
+                    <td className="border border-cyan-200 bg-white px-1 py-2 text-slate-600 dark:border-cyan-900/70 dark:bg-slate-900 dark:text-slate-300 sm:px-3">
+                      Equipe {summary.teamName}
+                    </td>
+                    {days.map((dayItem) => {
+                      const override =
+                        cellOverrides.find(
+                          (item) =>
+                            item.teamName === summary.teamName &&
+                            item.personKey === summary.personKey &&
+                            item.day === dayItem.day &&
+                            item.value === "VACATION"
+                        ) || null;
+                      const interactive = Boolean(onCellClick);
+
+                      return (
+                        <td
+                          key={`${summary.key}-${dayItem.day}`}
+                          className="border border-cyan-100 bg-white p-1 text-center dark:border-cyan-950 dark:bg-slate-950"
+                        >
+                          <button
+                            type="button"
+                            disabled={!interactive}
+                            onClick={() =>
+                              onCellClick?.({
+                                teamName: summary.teamName,
+                                personKey: summary.personKey,
+                                personName: summary.personName,
+                                day: dayItem.day,
+                                value: "VACATION",
+                                override,
+                              })
+                            }
+                            className={
+                              "inline-flex min-h-7 w-full items-center justify-center rounded border px-1 font-bold transition " +
+                              (override
+                                ? getCellClass("VACATION") + " ring-2 ring-cyan-500/50"
+                                : "border-transparent bg-transparent text-transparent") +
+                              (interactive
+                                ? " cursor-pointer hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-600 dark:hover:bg-cyan-950/40"
+                                : " cursor-default")
+                            }
+                          >
+                            {override ? getScaleCellLabel("VACATION") : "-"}
+                          </button>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
       ) : null}
