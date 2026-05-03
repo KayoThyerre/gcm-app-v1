@@ -157,7 +157,7 @@ export function ScalePrintView({
 
   return (
     <section className="w-full bg-white text-slate-950">
-      <header className="mb-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2">
+      <header className="mb-1 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-1.5">
         <div>
           <h1 className="text-[14px] font-bold leading-tight">
             Escala Mensal de Servico
@@ -169,7 +169,7 @@ export function ScalePrintView({
         </div>
 
         {selectedLabel ? (
-          <div className="rounded border border-slate-300 px-1.5 py-0.5 text-[7.5px] font-semibold leading-none text-slate-700">
+          <div className="rounded border border-slate-300 px-1 py-[1px] text-[7.5px] font-semibold leading-none text-slate-700">
             {selectedLabel}
           </div>
         ) : null}
@@ -298,11 +298,11 @@ export function ScalePrintView({
       )}
 
       {vacationSummaries.length > 0 ? (
-        <section className="mt-1.5 border border-cyan-300 bg-cyan-50/50">
-          <div className="border-b border-cyan-300 bg-cyan-100 px-1 py-[1px] text-[6.5px] font-bold uppercase leading-none text-cyan-900">
+        <section className="mt-1 border border-cyan-300 bg-cyan-50/50">
+          <div className="border-b border-cyan-300 bg-cyan-100 px-1 py-0 text-[6.5px] font-bold uppercase leading-none text-cyan-900">
             Ferias
           </div>
-          <div className="grid grid-cols-2 gap-x-2 gap-y-0 px-1 py-0.5 text-[6.5px] leading-tight text-slate-800">
+          <div className="grid grid-cols-2 gap-x-2 gap-y-0 px-1 py-[1px] text-[6.5px] leading-none text-slate-800">
             {vacationSummaries.map((summary) => (
               <div
                 key={`${summary.teamName}-${summary.personKey}`}
@@ -317,7 +317,7 @@ export function ScalePrintView({
         </section>
       ) : null}
 
-      <footer className="mt-1.5 flex flex-wrap gap-x-2 gap-y-0.5 border-t border-slate-300 pt-1 text-[6.8px] leading-tight text-slate-700">
+      <footer className="mt-1 flex flex-wrap gap-x-2 gap-y-0 border-t border-slate-300 pt-0.5 text-[6.8px] leading-none text-slate-700">
         <span><strong>1</strong> = 00h-06h</span>
         <span><strong>2</strong> = 06h-12h</span>
         <span><strong>3</strong> = 12h-18h</span>

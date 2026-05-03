@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   ScaleCalendarView,
   type ScaleCellOverride,
@@ -147,6 +148,19 @@ export function ScaleView() {
     window.print();
   }
 
+  const printView =
+    !loadingMonths && selectedScaleMonth ? (
+      <div data-print-root>
+        <ScalePrintView
+          teamConfigs={teamConfigs}
+          month={selectedScaleMonth.month}
+          year={selectedScaleMonth.year}
+          cellOverrides={cellOverrides}
+          selectedLabel={selectedLabel}
+        />
+      </div>
+    ) : null;
+
   return (
     <>
       <style>
@@ -158,31 +172,31 @@ export function ScaleView() {
           @media print {
             @page {
               size: A4 landscape;
-              margin: 4mm;
+              margin: 3mm;
             }
 
             html,
             body {
+              width: 100% !important;
+              min-height: 0 !important;
+              margin: 0 !important;
               background: #ffffff !important;
               color: #111827 !important;
+              overflow: visible !important;
               print-color-adjust: exact;
               -webkit-print-color-adjust: exact;
             }
 
-            body * {
-              visibility: hidden;
-            }
-
-            [data-print-root],
-            [data-print-root] * {
-              visibility: visible;
+            body > :not([data-print-root]) {
+              display: none !important;
             }
 
             [data-print-root] {
               display: block !important;
-              position: absolute;
-              inset: 0;
-              width: 100%;
+              position: static !important;
+              width: 100% !important;
+              min-height: 0 !important;
+              height: auto !important;
               max-width: none !important;
               margin: 0 !important;
               padding: 0 !important;
@@ -191,11 +205,7 @@ export function ScaleView() {
               overflow: visible !important;
             }
 
-            [data-print-root] table,
-            [data-print-root] tr,
-            [data-print-root] thead,
-            [data-print-root] tbody,
-            [data-print-root] footer {
+            [data-print-root] tr {
               break-inside: avoid;
               page-break-inside: avoid;
             }
@@ -300,17 +310,7 @@ export function ScaleView() {
       ) : null}
       </div>
 
-      {!loadingMonths && selectedScaleMonth ? (
-        <div data-print-root>
-          <ScalePrintView
-            teamConfigs={teamConfigs}
-            month={selectedScaleMonth.month}
-            year={selectedScaleMonth.year}
-            cellOverrides={cellOverrides}
-            selectedLabel={selectedLabel}
-          />
-        </div>
-      ) : null}
+      {printView && createPortal(printView, document.body)}
     </>
   );
 }
