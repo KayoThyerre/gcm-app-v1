@@ -153,7 +153,7 @@ export function ScaleView() {
           @media print {
             @page {
               size: A4 landscape;
-              margin: 1mm;
+              margin: 10mm;
             }
 
             html,
@@ -185,98 +185,24 @@ export function ScaleView() {
               overflow: visible !important;
             }
 
-            [data-print-root] > * {
-              margin-top: 0 !important;
-              margin-bottom: 0 !important;
-            }
-
             [data-print-hide] {
               display: none !important;
             }
 
-            [data-print-card] {
-              border: 0 !important;
-              border-radius: 0 !important;
-              box-shadow: none !important;
-              background: #ffffff !important;
-              padding: 0 !important;
-              margin: 0 !important;
-            }
-
+            [data-print-card],
             [data-print-section] {
-              break-inside: avoid-page;
-              page-break-inside: avoid;
-              box-shadow: none !important;
               background: #ffffff !important;
               color: #111827 !important;
               width: 100% !important;
               max-width: 100% !important;
               margin: 0 !important;
               padding: 0 !important;
-              overflow: hidden !important;
               border: 0 !important;
-              border-radius: 0 !important;
-              transform: none !important;
-            }
-
-            [data-print-section] table {
-              width: 100% !important;
-              min-width: 0 !important;
-              max-width: 100% !important;
-              border-collapse: collapse !important;
-              font-size: 5px !important;
-              line-height: 0.95 !important;
-              table-layout: fixed !important;
-            }
-
-            [data-print-section] thead {
-              display: table-header-group;
-            }
-
-            [data-scale-calendar-root="true"] {
-              gap: 1px !important;
-              border: 0 !important;
-              border-radius: 0 !important;
-              padding: 0 !important;
               box-shadow: none !important;
             }
 
-            [data-scale-calendar-root="true"] > div:first-child {
-              display: grid !important;
-              grid-template-columns: minmax(0, 1fr) auto !important;
-              align-items: end !important;
-              gap: 1px !important;
-              margin-bottom: 0 !important;
-            }
-
-            [data-scale-calendar-root="true"] h2 {
-              font-size: 10px !important;
-              line-height: 1.1 !important;
-            }
-
-            [data-scale-calendar-root="true"] p {
-              font-size: 6px !important;
-              line-height: 1.1 !important;
-            }
-
-            [data-scale-calendar-root="true"] > div:first-child > span {
-              font-size: 6px !important;
-              line-height: 1 !important;
-              padding: 1px 3px !important;
-              border-width: 1px !important;
-              white-space: nowrap !important;
-              max-width: none !important;
-              overflow: visible !important;
-            }
-
             [data-scale-table-wrapper="true"] {
-              overflow: hidden !important;
-              border-width: 0 !important;
-              border-radius: 0 !important;
-              break-inside: avoid-page;
-              page-break-inside: avoid;
-              width: 100% !important;
-              max-width: 100% !important;
+              overflow: visible !important;
             }
 
             [data-scale-table="true"] tr,
@@ -289,132 +215,9 @@ export function ScaleView() {
             [data-print-section] tr,
             [data-print-section] td,
             [data-print-section] th,
-            [data-print-section] div,
-            [data-print-section] span,
-            [data-print-section] button,
-            [data-print-section] section {
-              background-image: none !important;
-              box-shadow: none !important;
-              text-shadow: none !important;
-              filter: none !important;
-              backdrop-filter: none !important;
-            }
-
-            [data-print-section] td,
-            [data-print-section] th {
-              border-color: #cbd5e1 !important;
-              color: #111827 !important;
-              padding: 0 !important;
-              height: auto !important;
-              min-height: 0 !important;
-              vertical-align: middle !important;
-            }
-
             [data-print-section] button {
               color: inherit !important;
               cursor: default !important;
-              min-height: 0 !important;
-              height: auto !important;
-              padding: 0 !important;
-              line-height: 0.9 !important;
-            }
-
-            [data-print-section] .sticky {
-              position: static !important;
-            }
-
-            [data-column="name"] {
-              width: 36px !important;
-              min-width: 36px !important;
-              max-width: 36px !important;
-              padding-left: 0 !important;
-              padding-right: 0 !important;
-              font-size: 4.7px !important;
-              line-height: 0.95 !important;
-              white-space: nowrap !important;
-              overflow: hidden !important;
-              text-overflow: ellipsis !important;
-            }
-
-            [data-column="role"] {
-              width: 16px !important;
-              min-width: 16px !important;
-              max-width: 16px !important;
-              padding-left: 0 !important;
-              padding-right: 0 !important;
-              font-size: 4.1px !important;
-              line-height: 0.9 !important;
-              white-space: nowrap !important;
-              overflow: hidden !important;
-              text-overflow: clip !important;
-            }
-
-            [data-scale-table="true"] td > div,
-            [data-scale-table="true"] td > span,
-            [data-scale-table="true"] td > button,
-            [data-scale-table="true"] th > div,
-            [data-scale-table="true"] th > span {
-              padding-top: 0 !important;
-              padding-bottom: 0 !important;
-            }
-
-            [data-scale-table="true"] tr td[colspan] > div {
-              min-height: 5px !important;
-              padding: 0 0.25px !important;
-              gap: 0.5px !important;
-            }
-
-            [data-scale-table="true"] tr td[colspan] span:first-child {
-              height: 4px !important;
-              width: 1px !important;
-            }
-
-            [data-scale-table="true"] tr td[colspan] span:last-child {
-              font-size: 4.8px !important;
-              line-height: 0.9 !important;
-            }
-
-            [data-scale-table="true"] th:not([data-column]),
-            [data-scale-table="true"] td:not([data-column]) {
-              min-width: 5.6mm !important;
-              width: 5.6mm !important;
-              max-width: 5.6mm !important;
-              padding-left: 0 !important;
-              padding-right: 0 !important;
-            }
-
-            [data-scale-table="true"] thead th:not([data-column]) {
-              font-size: 4.3px !important;
-              line-height: 0.9 !important;
-              padding-top: 0 !important;
-              padding-bottom: 0 !important;
-              height: 6px !important;
-            }
-
-            [data-scale-table="true"] tbody td:not([data-column]) button {
-              min-height: 6px !important;
-              height: 6px !important;
-              width: 100% !important;
-              font-size: 4px !important;
-              line-height: 0.85 !important;
-              padding: 0 !important;
-              border-width: 0.5px !important;
-              border-radius: 0 !important;
-            }
-
-            [data-scale-table="true"] tbody tr {
-              height: 7px !important;
-            }
-
-            [data-scale-table="true"] thead tr:first-child th:not([data-column]) {
-              font-size: 4.3px !important;
-              height: 6px !important;
-            }
-
-            [data-scale-table="true"] thead tr:last-child th:not([data-column]) {
-              font-size: 3.5px !important;
-              height: 5px !important;
-              letter-spacing: -0.1px !important;
             }
 
             [data-scale-vacation="true"] {
@@ -422,28 +225,8 @@ export function ScaleView() {
             }
 
             [data-scale-legend="true"] {
-              display: flex !important;
-              flex-wrap: nowrap !important;
-              gap: 4px !important;
-              padding: 2px 0 !important;
-              margin-top: 2px !important;
-              font-size: 6px !important;
-              line-height: 1.1 !important;
-              white-space: nowrap !important;
               break-inside: avoid-page;
               page-break-inside: avoid;
-              border: 0 !important;
-              border-radius: 0 !important;
-              background: transparent !important;
-            }
-
-            [data-scale-legend="true"] > span {
-              display: inline !important;
-              white-space: nowrap !important;
-            }
-
-            [data-scale-legend="true"] > span:not(:last-child)::after {
-              content: " |";
             }
           }
         `}
