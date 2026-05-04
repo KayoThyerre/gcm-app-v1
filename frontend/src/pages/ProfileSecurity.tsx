@@ -1,6 +1,7 @@
 ﻿import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { FeedbackMessage } from "../components/FeedbackMessage";
 import { useTheme, type Theme } from "../hooks/useTheme";
 import { api } from "../services/api";
 
@@ -71,9 +72,11 @@ export function ProfileSecurity() {
         </p>
       </div>
 
-      {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
+      {errorMessage ? (
+        <FeedbackMessage variant="error">{errorMessage}</FeedbackMessage>
+      ) : null}
       {successMessage ? (
-        <p className="text-sm text-green-600">{successMessage}</p>
+        <FeedbackMessage variant="success">{successMessage}</FeedbackMessage>
       ) : null}
 
       <form onSubmit={handleSubmit} className="space-y-4">

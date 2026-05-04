@@ -1,4 +1,5 @@
 import { Fragment, useMemo } from "react";
+import { FeedbackMessage } from "../FeedbackMessage";
 
 export type InitialCycle = "DAY" | "NIGHT_START" | "NIGHT_END" | "OFF";
 export type ScaleCellValue =
@@ -363,12 +364,14 @@ export function ScaleCalendarView({
         ) : null}
       </div>
 
-      {loading ? <p className="text-sm text-slate-600 dark:text-slate-400">Carregando equipes...</p> : null}
+      {loading ? (
+        <FeedbackMessage variant="loading">Carregando equipes...</FeedbackMessage>
+      ) : null}
 
       {!loading && !hasRows ? (
-        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+        <FeedbackMessage variant="info">
           {emptyTeamsMessage}
-        </div>
+        </FeedbackMessage>
       ) : null}
 
       {hasRows ? (

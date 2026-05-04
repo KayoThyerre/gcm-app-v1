@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { approveUser, getUsers, rejectUser } from "../api/users";
+import { FeedbackMessage } from "../components/FeedbackMessage";
 import { RequireRole } from "../routes/RequireRole";
 import type { User } from "../types/User";
 
@@ -124,9 +125,11 @@ export function AdminUsers() {
           </div>
 
           {loading ? (
-            <p className="text-slate-600 dark:text-slate-400">Carregando usuarios...</p>
+            <FeedbackMessage variant="loading">Carregando usuarios...</FeedbackMessage>
           ) : null}
-          {errorMessage ? <p className="text-red-600">{errorMessage}</p> : null}
+          {errorMessage ? (
+            <FeedbackMessage variant="error">{errorMessage}</FeedbackMessage>
+          ) : null}
 
           <section className="space-y-4">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
@@ -134,7 +137,7 @@ export function AdminUsers() {
             </h2>
 
             {!loading && pendingUsers.length === 0 ? (
-              <p className="text-slate-600 dark:text-slate-400">Nenhum usuario pendente.</p>
+              <FeedbackMessage variant="info">Nenhum usuario pendente.</FeedbackMessage>
             ) : null}
 
             {!loading && pendingUsers.length > 0 ? (
@@ -258,7 +261,7 @@ export function AdminUsers() {
             </h2>
 
             {!loading && activeUsers.length === 0 ? (
-              <p className="text-slate-600 dark:text-slate-400">Nenhum usuario ativo.</p>
+              <FeedbackMessage variant="info">Nenhum usuario ativo.</FeedbackMessage>
             ) : null}
 
             {!loading && activeUsers.length > 0 ? (
@@ -390,12 +393,9 @@ export function AdminUsers() {
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl p-6 max-w-md w-full space-y-4">
               <h3 className="text-lg font-bold text-red-600">Atencao</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                Voce esta tentando desativar este usuario.
-              </p>
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                Apos desativado, o usuario nao podera mais acessar o sistema.
-              </p>
+              <FeedbackMessage variant="warning">
+                Voce esta tentando desativar este usuario. Apos desativado, o usuario nao podera mais acessar o sistema.
+              </FeedbackMessage>
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"

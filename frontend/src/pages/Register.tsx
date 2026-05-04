@@ -3,6 +3,7 @@ import { isAxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
 import { Input } from "../components/Input";
 import { Button } from "../components/Button";
+import { FeedbackMessage } from "../components/FeedbackMessage";
 import { AuthCard } from "../components/auth/AuthCard";
 import { useTheme } from "../hooks/useTheme";
 import { PublicLayout } from "../layouts/PublicLayout";
@@ -94,9 +95,9 @@ export function Register() {
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               {errorMessage && (
-                <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2 mb-3">
+                <FeedbackMessage variant="error" className="mb-1">
                   {errorMessage}
-                </div>
+                </FeedbackMessage>
               )}
 
               <Input

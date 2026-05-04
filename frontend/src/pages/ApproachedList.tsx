@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { FeedbackMessage } from "../components/FeedbackMessage";
 import { api } from "../services/api";
 
 type Approach = {
@@ -190,12 +191,14 @@ export function ApproachedList() {
         />
       </div>
 
-      {loading ? <p className="text-slate-600 dark:text-slate-400">Carregando...</p> : null}
+      {loading ? (
+        <FeedbackMessage variant="loading">Carregando abordados...</FeedbackMessage>
+      ) : null}
 
       {!loading && filteredApproaches.length === 0 ? (
-        <p className="text-slate-600 dark:text-slate-400">
+        <FeedbackMessage variant="info">
           Nenhum abordado encontrado.
-        </p>
+        </FeedbackMessage>
       ) : null}
 
       {!loading && filteredApproaches.length > 0 ? (

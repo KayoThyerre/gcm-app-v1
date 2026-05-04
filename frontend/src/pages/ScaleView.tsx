@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { FeedbackMessage } from "../components/FeedbackMessage";
 import {
   ScaleCalendarView,
   type ScaleCellOverride,
@@ -238,7 +239,9 @@ export function ScaleView() {
         Use a opcao Salvar como PDF no dialogo de impressao do navegador.
       </div>
 
-      {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
+      {errorMessage ? (
+        <FeedbackMessage variant="error">{errorMessage}</FeedbackMessage>
+      ) : null}
 
       <section data-print-hide className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/40 sm:p-5">
         <div className="grid gap-4 md:grid-cols-[minmax(0,320px)_1fr] md:items-end">
@@ -284,13 +287,11 @@ export function ScaleView() {
       </section>
 
       {loadingMonths ? (
-        <p className="text-slate-600 dark:text-slate-400">Carregando escalas...</p>
+        <FeedbackMessage variant="loading">Carregando escalas...</FeedbackMessage>
       ) : null}
 
       {!loadingMonths && scaleMonths.length === 0 ? (
-        <section className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-center dark:border-slate-700 dark:bg-slate-800 sm:p-8">
-          <p className="text-slate-600 dark:text-slate-300">Nenhum mes de escala cadastrado.</p>
-        </section>
+        <FeedbackMessage variant="info">Nenhum mes de escala cadastrado.</FeedbackMessage>
       ) : null}
 
       {!loadingMonths && selectedScaleMonth ? (

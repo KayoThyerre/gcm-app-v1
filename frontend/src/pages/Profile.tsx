@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { FeedbackMessage } from "../components/FeedbackMessage";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme, type Theme } from "../hooks/useTheme";
 import { api } from "../services/api";
@@ -149,7 +150,7 @@ export function Profile() {
   if (loading) {
     return (
       <div className="max-w-xl mx-auto p-8 space-y-6">
-        <p className="text-slate-600 dark:text-slate-400">Carregando perfil...</p>
+        <FeedbackMessage variant="loading">Carregando perfil...</FeedbackMessage>
       </div>
     );
   }
@@ -194,10 +195,12 @@ export function Profile() {
         </div>
       </div>
 
-      {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
+      {errorMessage ? (
+        <FeedbackMessage variant="error">{errorMessage}</FeedbackMessage>
+      ) : null}
 
       {successMessage ? (
-        <p className="text-sm text-green-600">{successMessage}</p>
+        <FeedbackMessage variant="success">{successMessage}</FeedbackMessage>
       ) : null}
 
       <form onSubmit={handleSubmit} className="space-y-4">

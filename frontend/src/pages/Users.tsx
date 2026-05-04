@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FeedbackMessage } from "../components/FeedbackMessage";
 import { api } from "../services/api";
 import { RequireRole } from "../routes/RequireRole";
 
@@ -15,11 +16,16 @@ type UsersListResponse = {
 
 export function Users() {
   const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchUsers() {
-      const response = await api.get<UsersListResponse>("/users");
-      setUsers(response.data.data);
+      try {
+        const response = await api.get<UsersListResponse>("/users");
+        setUsers(response.data.data);
+      } finally {
+        setLoading(false);
+      }
     }
 
     void fetchUsers();
@@ -75,6 +81,15 @@ export function Users() {
           ))}
         </div>
 
+        {loading ? (
+          <FeedbackMessage variant="loading">Carregando usuarios...</FeedbackMessage>
+        ) : null}
+
+        {!loading && users.length === 0 ? (
+          <FeedbackMessage variant="info">Nenhum usuario cadastrado.</FeedbackMessage>
+        ) : null}
+
+        {!loading && users.length > 0 ? (
         <div className="hidden bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 sm:block">
           <table className="w-full text-sm text-slate-900 dark:text-slate-100">
             <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
@@ -110,6 +125,7 @@ export function Users() {
             </tbody>
           </table>
         </div>
+        ) : null}
       </div>
     </RequireRole>
   );

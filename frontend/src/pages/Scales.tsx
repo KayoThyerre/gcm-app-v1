@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { FeedbackMessage } from "../components/FeedbackMessage";
 import {
   ScaleCalendarView,
   getScaleCellLabel,
@@ -741,8 +742,12 @@ export function Scales() {
         </p>
       </div>
 
-      {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
-      {successMessage ? <p className="text-sm text-green-600">{successMessage}</p> : null}
+      {errorMessage ? (
+        <FeedbackMessage variant="error">{errorMessage}</FeedbackMessage>
+      ) : null}
+      {successMessage ? (
+        <FeedbackMessage variant="success">{successMessage}</FeedbackMessage>
+      ) : null}
 
       <section className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/40 sm:p-5 md:grid-cols-[1fr_1fr_auto_auto] md:items-end">
         <div className="space-y-1">
@@ -803,16 +808,16 @@ export function Scales() {
         </button>
       </section>
 
-      {loading ? <p className="text-slate-600 dark:text-slate-400">Carregando...</p> : null}
+      {loading ? (
+        <FeedbackMessage variant="loading">Carregando escalas...</FeedbackMessage>
+      ) : null}
 
       {!loading ? (
         <>
           {!selectedScaleMonth ? (
-            <section className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-center dark:border-slate-700 dark:bg-slate-800 sm:p-8">
-              <p className="text-slate-600 dark:text-slate-300">
-                Gere ou selecione uma escala para configurar as equipes.
-              </p>
-            </section>
+            <FeedbackMessage variant="info">
+              Gere ou selecione uma escala para configurar as equipes.
+            </FeedbackMessage>
           ) : null}
 
           {selectedScaleMonth ? (
@@ -827,7 +832,7 @@ export function Scales() {
               </div>
 
               {loadingTeams ? (
-                <p className="text-sm text-slate-600 dark:text-slate-400">Carregando equipes...</p>
+                <FeedbackMessage variant="loading">Carregando equipes...</FeedbackMessage>
               ) : null}
 
               <div className="grid gap-4 xl:grid-cols-2">
@@ -905,9 +910,9 @@ export function Scales() {
                       </div>
 
                       {teamMessage ? (
-                        <p className={`text-sm ${teamMessage.type === "success" ? "text-green-600" : "text-red-600"}`}>
+                        <FeedbackMessage variant={teamMessage.type}>
                           {teamMessage.text}
-                        </p>
+                        </FeedbackMessage>
                       ) : null}
 
                       <button
@@ -1007,15 +1012,15 @@ export function Scales() {
               </div>
 
               {vacationPersonOptions.length === 0 ? (
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+                <FeedbackMessage variant="warning">
                   Essa equipe ainda nao possui pessoas configuradas para receber ferias.
-                </p>
+                </FeedbackMessage>
               ) : null}
 
               {vacationMessage ? (
-                <p className={`text-sm ${vacationMessage.type === "success" ? "text-green-600" : "text-red-600"}`}>
+                <FeedbackMessage variant={vacationMessage.type}>
                   {vacationMessage.text}
-                </p>
+                </FeedbackMessage>
               ) : null}
 
               <button
@@ -1072,7 +1077,9 @@ export function Scales() {
             </div>
 
             {overrideErrorMessage ? (
-              <p className="mt-4 text-sm text-red-600">{overrideErrorMessage}</p>
+              <FeedbackMessage variant="error" className="mt-4">
+                {overrideErrorMessage}
+              </FeedbackMessage>
             ) : null}
 
             <div className="mt-6 flex flex-wrap items-center gap-3">

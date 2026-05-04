@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import { FeedbackMessage } from "../components/FeedbackMessage";
 import { api } from "../services/api";
 
 type UploadNewsResponse = {
@@ -271,10 +272,12 @@ export function News() {
           </p>
         </div>
 
-        {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
+        {errorMessage ? (
+          <FeedbackMessage variant="error">{errorMessage}</FeedbackMessage>
+        ) : null}
 
         {successMessage ? (
-          <p className="text-sm text-green-600">{successMessage}</p>
+          <FeedbackMessage variant="success">{successMessage}</FeedbackMessage>
         ) : null}
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -410,13 +413,13 @@ export function News() {
         </div>
 
         {loadingList ? (
-          <p className="text-slate-600 dark:text-slate-400">Carregando...</p>
+          <FeedbackMessage variant="loading">Carregando noticias...</FeedbackMessage>
         ) : null}
 
         {!loadingList && filteredNews.length === 0 ? (
-          <p className="text-slate-600 dark:text-slate-400">
+          <FeedbackMessage variant="info">
             Nenhuma noticia encontrada.
-          </p>
+          </FeedbackMessage>
         ) : null}
 
         {!loadingList && filteredNews.length > 0 ? (
