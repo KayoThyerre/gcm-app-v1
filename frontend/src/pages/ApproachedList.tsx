@@ -44,6 +44,7 @@ export function ApproachedList() {
   const [approaches, setApproaches] = useState<Approach[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showOnlyConvicted, setShowOnlyConvicted] = useState(false);
   const [selectedApproach, setSelectedApproach] = useState<Approach | null>(null);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -67,27 +68,25 @@ export function ApproachedList() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, showOnlyConvicted]);
 
   const filteredApproaches = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
-
-    if (!normalizedSearchTerm) {
-      return approaches;
-    }
 
     return approaches.filter((approach) => {
       const normalizedName = approach.name.toLowerCase();
       const normalizedCpf = (approach.cpf ?? "").toLowerCase();
       const normalizedRg = (approach.rg ?? "").toLowerCase();
-
-      return (
+      const matchesSearch =
+        !normalizedSearchTerm ||
         normalizedName.includes(normalizedSearchTerm) ||
         normalizedCpf.includes(normalizedSearchTerm) ||
-        normalizedRg.includes(normalizedSearchTerm)
-      );
+        normalizedRg.includes(normalizedSearchTerm);
+      const matchesConvictedFilter = !showOnlyConvicted || approach.isConvicted;
+
+      return matchesSearch && matchesConvictedFilter;
     });
-  }, [approaches, searchTerm]);
+  }, [approaches, searchTerm, showOnlyConvicted]);
 
   const totalPages = Math.max(1, Math.ceil(filteredApproaches.length / itemsPerPage));
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -189,6 +188,15 @@ export function ApproachedList() {
           placeholder="Buscar por nome, CPF ou RG..."
           className="w-full rounded-md border px-4 py-2 bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
         />
+        <label className="inline-flex w-fit items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+          <input
+            type="checkbox"
+            checked={showOnlyConvicted}
+            onChange={(event) => setShowOnlyConvicted(event.target.checked)}
+            className="h-4 w-4"
+          />
+          Somente apenados
+        </label>
       </div>
 
       {loading ? (

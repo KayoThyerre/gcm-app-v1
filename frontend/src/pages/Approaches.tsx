@@ -54,6 +54,7 @@ export function Approaches() {
   const [approaches, setApproaches] = useState<Approach[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showOnlyConvicted, setShowOnlyConvicted] = useState(false);
 
   const [name, setName] = useState("");
   const [cpf, setCpf] = useState("");
@@ -141,20 +142,18 @@ export function Approaches() {
   const filteredApproaches = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
-    if (!normalizedSearchTerm) {
-      return approaches;
-    }
-
     return approaches.filter((approach) => {
       const normalizedName = approach.name.toLowerCase();
       const normalizedCpf = (approach.cpf ?? "").toLowerCase();
-
-      return (
+      const matchesSearch =
+        !normalizedSearchTerm ||
         normalizedName.includes(normalizedSearchTerm) ||
-        normalizedCpf.includes(normalizedSearchTerm)
-      );
+        normalizedCpf.includes(normalizedSearchTerm);
+      const matchesConvictedFilter = !showOnlyConvicted || approach.isConvicted;
+
+      return matchesSearch && matchesConvictedFilter;
     });
-  }, [approaches, searchTerm]);
+  }, [approaches, searchTerm, showOnlyConvicted]);
 
   function resetForm() {
     setName("");
@@ -594,6 +593,15 @@ export function Approaches() {
             placeholder="Buscar por nome ou CPF..."
             className="w-full border rounded px-4 py-2 bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
           />
+          <label className="inline-flex w-fit items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+            <input
+              type="checkbox"
+              checked={showOnlyConvicted}
+              onChange={(event) => setShowOnlyConvicted(event.target.checked)}
+              className="h-4 w-4"
+            />
+            Somente apenados
+          </label>
         </div>
 
         {loading ? (
