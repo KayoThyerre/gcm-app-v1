@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Input } from "../components/Input";
 import { Button } from "../components/Button";
@@ -77,6 +78,15 @@ export function Login() {
           }`}
         >
           <AuthCard>
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="inline-flex w-fit items-center gap-2 rounded-md px-2 py-1 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Voltar para a home
+            </button>
+
             <h1 className="text-2xl font-semibold text-slate-900">Entrar</h1>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -119,6 +129,7 @@ export function Login() {
               >
                 Criar conta
               </button>
+
             </form>
           </AuthCard>
         </div>
