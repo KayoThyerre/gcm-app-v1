@@ -5,6 +5,8 @@ import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import { ensureRole } from "../middlewares/ensureRole";
 
 const router = Router();
+const SCALE_READ_ROLES = ["ADMIN", "DEV", "USER", "SUPERVISOR"] as const;
+const SCALE_MANAGE_ROLES = ["ADMIN", "DEV"] as const;
 const allowedValues = new Set<ScaleCellValue>([
   "DAY",
   "NIGHT_START",
@@ -19,7 +21,7 @@ const allowedValues = new Set<ScaleCellValue>([
 router.get(
   "/:scaleMonthId/overrides",
   ensureAuthenticated,
-  ensureRole(["ADMIN", "DEV"]),
+  ensureRole([...SCALE_READ_ROLES]),
   async (req, res) => {
     const { scaleMonthId } = req.params;
 
@@ -39,7 +41,7 @@ router.get(
 router.post(
   "/:scaleMonthId/overrides",
   ensureAuthenticated,
-  ensureRole(["ADMIN", "DEV"]),
+  ensureRole([...SCALE_MANAGE_ROLES]),
   async (req, res) => {
     const { scaleMonthId } = req.params;
 
@@ -113,7 +115,7 @@ router.post(
 router.put(
   "/overrides/:id",
   ensureAuthenticated,
-  ensureRole(["ADMIN", "DEV"]),
+  ensureRole([...SCALE_MANAGE_ROLES]),
   async (req, res) => {
     const { id } = req.params;
     const { value } = req.body as {
@@ -149,7 +151,7 @@ router.put(
 router.delete(
   "/overrides/:id",
   ensureAuthenticated,
-  ensureRole(["ADMIN", "DEV"]),
+  ensureRole([...SCALE_MANAGE_ROLES]),
   async (req, res) => {
     const { id } = req.params;
 

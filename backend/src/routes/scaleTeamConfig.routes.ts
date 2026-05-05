@@ -10,6 +10,8 @@ import {
 } from "../utils/validation";
 
 const router = Router();
+const SCALE_READ_ROLES = ["ADMIN", "DEV", "USER", "SUPERVISOR"] as const;
+const SCALE_MANAGE_ROLES = ["ADMIN", "DEV"] as const;
 const allowedTeamNames = new Set(["A", "B", "C", "D"]);
 const allowedInitialCycles = new Set<InitialCycle>([
   "DAY",
@@ -38,7 +40,7 @@ function parseMembers(value: unknown) {
 router.post(
   "/:scaleMonthId/teams",
   ensureAuthenticated,
-  ensureRole(["ADMIN", "DEV"]),
+  ensureRole([...SCALE_MANAGE_ROLES]),
   async (req, res) => {
     const { scaleMonthId } = req.params;
 
@@ -146,7 +148,7 @@ router.post(
 router.get(
   "/:scaleMonthId/teams",
   ensureAuthenticated,
-  ensureRole(["ADMIN", "DEV"]),
+  ensureRole([...SCALE_READ_ROLES]),
   async (req, res) => {
     const { scaleMonthId } = req.params;
 
@@ -169,7 +171,7 @@ router.get(
 router.put(
   "/:teamConfigId",
   ensureAuthenticated,
-  ensureRole(["ADMIN", "DEV"]),
+  ensureRole([...SCALE_MANAGE_ROLES]),
   async (req, res) => {
     const { teamConfigId } = req.params;
 

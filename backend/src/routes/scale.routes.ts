@@ -6,6 +6,8 @@ import { ShiftType } from "@prisma/client";
 import { getPagination } from "../utils/pagination";
 
 const router = Router();
+const SCALE_READ_ROLES = ["ADMIN", "DEV", "USER", "SUPERVISOR"] as const;
+const SCALE_MANAGE_ROLES = ["ADMIN", "DEV"] as const;
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month, 0).getDate();
@@ -28,7 +30,7 @@ function createScaleDates(year: number, month: number) {
 router.post(
   "/months",
   ensureAuthenticated,
-  ensureRole(["ADMIN", "DEV"]),
+  ensureRole([...SCALE_MANAGE_ROLES]),
   async (req, res) => {
     const { month, year } = req.body as {
       month?: unknown;
@@ -81,7 +83,7 @@ router.post(
 router.get(
   "/months",
   ensureAuthenticated,
-  ensureRole(["ADMIN", "DEV"]),
+  ensureRole([...SCALE_READ_ROLES]),
   async (req, res) => {
     const { page, limit, skip } = getPagination(req.query, { maxLimit: 50 });
 
@@ -106,7 +108,7 @@ router.get(
 router.get(
   "/months/:id",
   ensureAuthenticated,
-  ensureRole(["ADMIN", "DEV"]),
+  ensureRole([...SCALE_READ_ROLES]),
   async (req, res) => {
     const { id } = req.params;
 
@@ -137,7 +139,7 @@ router.get(
 router.delete(
   "/months/:id",
   ensureAuthenticated,
-  ensureRole(["ADMIN", "DEV"]),
+  ensureRole([...SCALE_MANAGE_ROLES]),
   async (req, res) => {
     const { id } = req.params;
 

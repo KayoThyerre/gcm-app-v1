@@ -11,8 +11,9 @@ function authHeader(role: Role, sub = `${role.toLowerCase()}-1`) {
   return `Bearer ${token}`;
 }
 
-const allowedScaleRoles: Role[] = ["ADMIN", "DEV"];
-const blockedScaleRoles: Role[] = ["USER", "SUPERVISOR"];
+const readScaleRoles: Role[] = ["ADMIN", "DEV", "USER", "SUPERVISOR"];
+const manageScaleRoles: Role[] = ["ADMIN", "DEV"];
+const blockedManageScaleRoles: Role[] = ["USER", "SUPERVISOR"];
 
 function teamPayload() {
   return {
@@ -34,7 +35,7 @@ function overridePayload() {
 }
 
 describe("scales roles", () => {
-  it.each(allowedScaleRoles)("permite %s acessar GET /scales/months", async (role) => {
+  it.each(readScaleRoles)("permite %s acessar GET /scales/months", async (role) => {
     prismaMock.scaleMonth.findMany.mockResolvedValue([]);
     prismaMock.scaleMonth.count.mockResolvedValue(0);
 
@@ -49,16 +50,7 @@ describe("scales roles", () => {
     });
   });
 
-  it.each(blockedScaleRoles)("bloqueia %s em GET /scales/months", async (role) => {
-    const response = await request(app)
-      .get("/scales/months")
-      .set("Authorization", authHeader(role));
-
-    expect(response.status).toBe(403);
-    expect(prismaMock.scaleMonth.findMany).not.toHaveBeenCalled();
-  });
-
-  it.each(allowedScaleRoles)("permite %s criar mes de escala", async (role) => {
+  it.each(manageScaleRoles)("permite %s criar mes de escala", async (role) => {
     prismaMock.scaleMonth.findFirst.mockResolvedValue(null);
     prismaMock.scaleMonth.create.mockResolvedValue({
       id: "scale-month-1",
@@ -84,7 +76,7 @@ describe("scales roles", () => {
     expect(prismaMock.scaleMonth.create).toHaveBeenCalled();
   });
 
-  it.each(blockedScaleRoles)("bloqueia %s em POST /scales/months", async (role) => {
+  it.each(blockedManageScaleRoles)("bloqueia %s em POST /scales/months", async (role) => {
     const response = await request(app)
       .post("/scales/months")
       .set("Authorization", authHeader(role))
@@ -97,7 +89,7 @@ describe("scales roles", () => {
     expect(prismaMock.scaleMonth.create).not.toHaveBeenCalled();
   });
 
-  it.each(allowedScaleRoles)(
+  it.each(readScaleRoles)(
     "permite %s acessar GET /scales/:scaleMonthId/teams",
     async (role) => {
       prismaMock.scaleTeamConfig.findMany.mockResolvedValue([]);
@@ -111,19 +103,7 @@ describe("scales roles", () => {
     }
   );
 
-  it.each(blockedScaleRoles)(
-    "bloqueia %s em GET /scales/:scaleMonthId/teams",
-    async (role) => {
-      const response = await request(app)
-        .get("/scales/scale-month-1/teams")
-        .set("Authorization", authHeader(role));
-
-      expect(response.status).toBe(403);
-      expect(prismaMock.scaleTeamConfig.findMany).not.toHaveBeenCalled();
-    }
-  );
-
-  it.each(allowedScaleRoles)(
+  it.each(manageScaleRoles)(
     "permite %s criar configuracao de equipe",
     async (role) => {
       prismaMock.scaleMonth.findUnique.mockResolvedValue({
@@ -147,7 +127,7 @@ describe("scales roles", () => {
     }
   );
 
-  it.each(blockedScaleRoles)(
+  it.each(blockedManageScaleRoles)(
     "bloqueia %s em POST /scales/:scaleMonthId/teams",
     async (role) => {
       const response = await request(app)
@@ -160,7 +140,7 @@ describe("scales roles", () => {
     }
   );
 
-  it.each(allowedScaleRoles)(
+  it.each(readScaleRoles)(
     "permite %s acessar GET /scales/:scaleMonthId/overrides",
     async (role) => {
       prismaMock.scaleCellOverride.findMany.mockResolvedValue([]);
@@ -174,19 +154,7 @@ describe("scales roles", () => {
     }
   );
 
-  it.each(blockedScaleRoles)(
-    "bloqueia %s em GET /scales/:scaleMonthId/overrides",
-    async (role) => {
-      const response = await request(app)
-        .get("/scales/scale-month-1/overrides")
-        .set("Authorization", authHeader(role));
-
-      expect(response.status).toBe(403);
-      expect(prismaMock.scaleCellOverride.findMany).not.toHaveBeenCalled();
-    }
-  );
-
-  it.each(allowedScaleRoles)(
+  it.each(manageScaleRoles)(
     "permite %s criar override de escala",
     async (role) => {
       prismaMock.scaleMonth.findUnique.mockResolvedValue({
@@ -208,7 +176,7 @@ describe("scales roles", () => {
     }
   );
 
-  it.each(blockedScaleRoles)(
+  it.each(blockedManageScaleRoles)(
     "bloqueia %s em POST /scales/:scaleMonthId/overrides",
     async (role) => {
       const response = await request(app)
@@ -221,7 +189,7 @@ describe("scales roles", () => {
     }
   );
 
-  it.each(allowedScaleRoles)("permite %s editar override", async (role) => {
+  it.each(manageScaleRoles)("permite %s editar override", async (role) => {
     prismaMock.scaleCellOverride.update.mockResolvedValue({
       id: "override-1",
       value: "OFF",
@@ -238,7 +206,7 @@ describe("scales roles", () => {
     expect(prismaMock.scaleCellOverride.update).toHaveBeenCalled();
   });
 
-  it.each(blockedScaleRoles)("bloqueia %s em PUT /scales/overrides/:id", async (role) => {
+  it.each(blockedManageScaleRoles)("bloqueia %s em PUT /scales/overrides/:id", async (role) => {
     const response = await request(app)
       .put("/scales/overrides/override-1")
       .set("Authorization", authHeader(role))
@@ -250,7 +218,7 @@ describe("scales roles", () => {
     expect(prismaMock.scaleCellOverride.update).not.toHaveBeenCalled();
   });
 
-  it.each(allowedScaleRoles)("permite %s deletar override", async (role) => {
+  it.each(manageScaleRoles)("permite %s deletar override", async (role) => {
     prismaMock.scaleCellOverride.delete.mockResolvedValue({
       id: "override-1",
     });
@@ -263,7 +231,7 @@ describe("scales roles", () => {
     expect(prismaMock.scaleCellOverride.delete).toHaveBeenCalled();
   });
 
-  it.each(blockedScaleRoles)(
+  it.each(blockedManageScaleRoles)(
     "bloqueia %s em DELETE /scales/overrides/:id",
     async (role) => {
       const response = await request(app)
