@@ -8,6 +8,7 @@
     "bootstrap:dev": "npm run build && node dist/scripts/bootstrapDev.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "prisma:generate": "prisma generate",
+    "reset:password": "npm run build && node dist/scripts/resetPassword.js",
     "start": "node dist/server.js",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "test": "vitest run"
