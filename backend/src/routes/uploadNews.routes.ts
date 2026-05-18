@@ -6,6 +6,7 @@ import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import { ensureRole } from "../middlewares/ensureRole";
 
 export const uploadNewsRoutes = Router();
+const NEWS_UPLOAD_ROLES = ["ADMIN", "DEV"] as const;
 
 const newsUploadsPath = path.resolve(process.cwd(), "uploads", "news");
 const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -42,7 +43,7 @@ const upload = multer({
 uploadNewsRoutes.post(
   "/",
   ensureAuthenticated,
-  ensureRole(["ADMIN"]),
+  ensureRole([...NEWS_UPLOAD_ROLES]),
   (req, res) => {
     upload.single("image")(req, res, (error) => {
       if (error instanceof multer.MulterError) {

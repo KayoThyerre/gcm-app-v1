@@ -14,6 +14,22 @@ type UsersListResponse = {
   data: User[];
 };
 
+function getRoleLabel(role: string) {
+  if (role === "ADMIN") {
+    return "Administrador";
+  }
+
+  if (role === "DEV") {
+    return "Desenvolvedor";
+  }
+
+  if (role === "SUPERVISOR") {
+    return "Supervisor";
+  }
+
+  return "Usuario";
+}
+
 export function Users() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +48,7 @@ export function Users() {
   }, []);
 
   return (
-    <RequireRole allowedRoles={["ADMIN"]}>
+    <RequireRole allowedRoles={["ADMIN", "DEV"]}>
       <div className="flex flex-col gap-6">
         <div>
           <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
@@ -65,7 +81,7 @@ export function Users() {
                       Cargo
                     </p>
                     <p className="font-medium text-slate-900 dark:text-slate-100">
-                      {user.role === "ADMIN" ? "Administrador" : "Usuario"}
+                      {getRoleLabel(user.role)}
                     </p>
                   </div>
 
@@ -115,7 +131,7 @@ export function Users() {
                   <td className="px-4 py-3">{user.name}</td>
                   <td className="px-4 py-3">{user.email}</td>
                   <td className="px-4 py-3">
-                    {user.role === "ADMIN" ? "Administrador" : "Usuario"}
+                    {getRoleLabel(user.role)}
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-green-600 font-medium">Ativo</span>

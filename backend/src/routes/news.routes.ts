@@ -7,11 +7,12 @@ import { FIELD_LIMITS, validateMaxLength } from "../utils/validation";
 import { getPagination } from "../utils/pagination";
 
 export const newsRoutes = Router();
+const NEWS_MANAGE_ROLES = ["ADMIN", "DEV"] as const;
 
 newsRoutes.post(
   "/",
   ensureAuthenticated,
-  ensureRole(["ADMIN"]),
+  ensureRole([...NEWS_MANAGE_ROLES]),
   async (req, res) => {
     const { title, content, imageUrl, published } = req.body as {
       title?: unknown;
@@ -81,7 +82,7 @@ newsRoutes.get("/", async (req, res) => {
 newsRoutes.get(
   "/admin",
   ensureAuthenticated,
-  ensureRole(["ADMIN"]),
+  ensureRole([...NEWS_MANAGE_ROLES]),
   async (req, res) => {
     const { page, limit, skip } = getPagination(req.query, { maxLimit: 50 });
 
@@ -124,7 +125,7 @@ newsRoutes.get("/:id", async (req, res) => {
 newsRoutes.put(
   "/:id",
   ensureAuthenticated,
-  ensureRole(["ADMIN"]),
+  ensureRole([...NEWS_MANAGE_ROLES]),
   async (req, res) => {
     const { id } = req.params;
 
@@ -208,7 +209,7 @@ newsRoutes.put(
 newsRoutes.delete(
   "/:id",
   ensureAuthenticated,
-  ensureRole(["ADMIN"]),
+  ensureRole([...NEWS_MANAGE_ROLES]),
   async (req, res) => {
     const { id } = req.params;
 

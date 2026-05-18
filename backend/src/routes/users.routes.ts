@@ -8,11 +8,12 @@ import { FIELD_LIMITS, validateMaxLength } from "../utils/validation";
 import { getPagination } from "../utils/pagination";
 
 export const usersRoutes = Router();
+const USER_MANAGE_ROLES = ["ADMIN", "DEV"] as const;
 
 usersRoutes.get(
   "/",
   ensureAuthenticated,
-  ensureRole(["ADMIN"]),
+  ensureRole([...USER_MANAGE_ROLES]),
   async (req, res) => {
     const { page, limit, skip } = getPagination(req.query, { maxLimit: 25 });
 
@@ -45,7 +46,7 @@ usersRoutes.get(
 usersRoutes.post(
   "/",
   ensureAuthenticated,
-  ensureRole(["ADMIN"]),
+  ensureRole([...USER_MANAGE_ROLES]),
   async (req, res) => {
   const { name, email, password, role } = req.body;
 
@@ -108,7 +109,7 @@ usersRoutes.post(
 usersRoutes.patch(
   "/:id/status",
   ensureAuthenticated,
-  ensureRole(["ADMIN"]),
+  ensureRole([...USER_MANAGE_ROLES]),
   async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;

@@ -41,13 +41,13 @@ const MAIN_SIDEBAR_ITEMS: SidebarItem[] = [
     label: "Usuários",
     path: "/dashboard/admin/users",
     icon: Users,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "DEV"],
   },
   {
     label: "Notícias",
     path: "/home/news",
     icon: Newspaper,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "DEV"],
   },
   {
     label: "Escalas",

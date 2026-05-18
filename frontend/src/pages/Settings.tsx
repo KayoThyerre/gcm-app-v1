@@ -5,7 +5,7 @@ export function Settings() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <RequireRole allowedRoles={["ADMIN"]}>
+    <RequireRole allowedRoles={["ADMIN", "DEV"]}>
       <div className="space-y-4">
         <p className="text-slate-700 dark:text-slate-300">Configuracoes gerais.</p>
         <div className="space-y-2">

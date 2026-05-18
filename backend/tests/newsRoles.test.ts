@@ -20,22 +20,25 @@ function newsPayload() {
 }
 
 describe("news roles", () => {
-  it("permite ADMIN acessar GET /news/admin", async () => {
+  it.each(["ADMIN", "DEV"] as Role[])(
+    "permite %s acessar GET /news/admin",
+    async (role) => {
     prismaMock.news.findMany.mockResolvedValue([]);
     prismaMock.news.count.mockResolvedValue(0);
 
     const response = await request(app)
       .get("/news/admin")
-      .set("Authorization", authHeader("ADMIN"));
+      .set("Authorization", authHeader(role));
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({
       data: [],
       total: 0,
     });
-  });
+    }
+  );
 
-  it.each(["USER", "SUPERVISOR", "DEV"] as Role[])(
+  it.each(["USER", "SUPERVISOR"] as Role[])(
     "bloqueia %s em GET /news/admin",
     async (role) => {
       const response = await request(app)
@@ -47,7 +50,7 @@ describe("news roles", () => {
     }
   );
 
-  it("permite ADMIN criar noticia", async () => {
+  it.each(["ADMIN", "DEV"] as Role[])("permite %s criar noticia", async (role) => {
     prismaMock.news.create.mockResolvedValue({
       id: "news-1",
       ...newsPayload(),
@@ -57,7 +60,7 @@ describe("news roles", () => {
 
     const response = await request(app)
       .post("/news")
-      .set("Authorization", authHeader("ADMIN"))
+      .set("Authorization", authHeader(role))
       .send(newsPayload());
 
     expect(response.status).toBe(201);
@@ -72,7 +75,7 @@ describe("news roles", () => {
     );
   });
 
-  it.each(["USER", "SUPERVISOR", "DEV"] as Role[])(
+  it.each(["USER", "SUPERVISOR"] as Role[])(
     "bloqueia %s em POST /news",
     async (role) => {
       const response = await request(app)
@@ -85,7 +88,7 @@ describe("news roles", () => {
     }
   );
 
-  it("permite ADMIN editar noticia", async () => {
+  it.each(["ADMIN", "DEV"] as Role[])("permite %s editar noticia", async (role) => {
     prismaMock.news.update.mockResolvedValue({
       id: "news-1",
       title: "Titulo atualizado",
@@ -94,7 +97,7 @@ describe("news roles", () => {
 
     const response = await request(app)
       .put("/news/news-1")
-      .set("Authorization", authHeader("ADMIN"))
+      .set("Authorization", authHeader(role))
       .send({
         title: "Titulo atualizado",
       });
@@ -122,14 +125,14 @@ describe("news roles", () => {
     expect(prismaMock.news.update).not.toHaveBeenCalled();
   });
 
-  it("permite ADMIN deletar noticia", async () => {
+  it.each(["ADMIN", "DEV"] as Role[])("permite %s deletar noticia", async (role) => {
     prismaMock.news.delete.mockResolvedValue({
       id: "news-1",
     });
 
     const response = await request(app)
       .delete("/news/news-1")
-      .set("Authorization", authHeader("ADMIN"));
+      .set("Authorization", authHeader(role));
 
     expect(response.status).toBe(204);
     expect(prismaMock.news.delete).toHaveBeenCalledWith({

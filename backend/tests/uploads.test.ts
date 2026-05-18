@@ -123,10 +123,12 @@ describe("uploads", () => {
   });
 
   describe("news upload", () => {
-    it("permite ADMIN enviar imagem de noticia", async () => {
+    it.each(["ADMIN", "DEV"] as Role[])(
+      "permite %s enviar imagem de noticia",
+      async (role) => {
       const response = await request(app)
         .post("/upload/news")
-        .set("Authorization", authHeader("ADMIN", "upload-news-admin"))
+        .set("Authorization", authHeader(role, `upload-news-${role.toLowerCase()}`))
         .attach("image", validImage, {
           filename: "news.png",
           contentType: "image/png",
@@ -134,14 +136,17 @@ describe("uploads", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.url).toEqual(
-        expect.stringContaining("/uploads/news/news-upload-news-admin-")
+        expect.stringContaining(`/uploads/news/news-upload-news-${role.toLowerCase()}-`)
       );
-    });
+      }
+    );
 
-    it("bloqueia USER ao enviar imagem de noticia", async () => {
+    it.each(["USER", "SUPERVISOR"] as Role[])(
+      "bloqueia %s ao enviar imagem de noticia",
+      async (role) => {
       const response = await request(app)
         .post("/upload/news")
-        .set("Authorization", authHeader("USER", "upload-news-user"))
+        .set("Authorization", authHeader(role, `upload-news-${role.toLowerCase()}`))
         .attach("image", validImage, {
           filename: "news.png",
           contentType: "image/png",
@@ -149,7 +154,8 @@ describe("uploads", () => {
 
       expect(response.status).toBe(403);
       expect(response.body.error).toBe("Acesso negado");
-    });
+      }
+    );
 
     it("falha com MIME invalido", async () => {
       const response = await request(app)
