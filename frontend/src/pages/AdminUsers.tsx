@@ -2,6 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { approveUser, getUsers, rejectUser } from "../api/users";
 import { FeedbackMessage } from "../components/FeedbackMessage";
 import { RequireRole } from "../routes/RequireRole";
+import {
+  badgeStyles,
+  buttonStyles,
+  fieldStyles,
+  tableContainerStyles,
+  tableHeadStyles,
+} from "../styles/ui";
 import type { User } from "../types/User";
 
 export function AdminUsers() {
@@ -120,7 +127,7 @@ export function AdminUsers() {
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Buscar usuario por nome ou email..."
-              className="w-full border rounded px-4 py-2 bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+              className={fieldStyles}
             />
           </div>
 
@@ -171,7 +178,7 @@ export function AdminUsers() {
                           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                             Status
                           </p>
-                          <p className="font-medium text-amber-600">Pendente</p>
+                          <span className={badgeStyles.pending}>Pendente</span>
                         </div>
                       </div>
 
@@ -184,7 +191,7 @@ export function AdminUsers() {
                           type="button"
                           onClick={() => handleApprove(user.id)}
                           disabled={processingUserId === user.id}
-                          className="rounded bg-green-500 px-3 py-2 text-white cursor-pointer transition hover:bg-green-600 disabled:opacity-60"
+                          className={buttonStyles.primary}
                         >
                           Aprovar
                         </button>
@@ -192,7 +199,7 @@ export function AdminUsers() {
                           type="button"
                           onClick={() => handleReject(user.id)}
                           disabled={processingUserId === user.id}
-                          className="rounded bg-red-500 px-3 py-2 text-white cursor-pointer transition hover:bg-red-600 disabled:opacity-60"
+                          className={buttonStyles.destructive}
                         >
                           Recusar
                         </button>
@@ -204,9 +211,9 @@ export function AdminUsers() {
             ) : null}
 
             {!loading && pendingUsers.length > 0 ? (
-              <div className="hidden w-full border rounded overflow-visible sm:block">
+              <div className={tableContainerStyles}>
                 <table className="w-full text-slate-900 dark:text-slate-100">
-                  <thead className="bg-slate-100 dark:bg-slate-900">
+                  <thead className={tableHeadStyles}>
                     <tr className="text-slate-700 dark:text-slate-200">
                       <th className="text-left px-4 py-3">Nome</th>
                       <th className="text-left px-4 py-3">Email</th>
@@ -233,7 +240,7 @@ export function AdminUsers() {
                               type="button"
                               onClick={() => handleApprove(user.id)}
                               disabled={processingUserId === user.id}
-                              className="bg-green-500 text-white px-3 py-1 rounded cursor-pointer transition hover:bg-green-600 disabled:opacity-60"
+                              className={buttonStyles.primary}
                             >
                               Aprovar
                             </button>
@@ -241,7 +248,7 @@ export function AdminUsers() {
                               type="button"
                               onClick={() => handleReject(user.id)}
                               disabled={processingUserId === user.id}
-                              className="bg-red-500 text-white px-3 py-1 rounded cursor-pointer transition hover:bg-red-600 disabled:opacity-60"
+                              className={buttonStyles.destructive}
                             >
                               Recusar
                             </button>
@@ -295,7 +302,7 @@ export function AdminUsers() {
                           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                             Status
                           </p>
-                          <p className="font-medium text-green-600">Ativo</p>
+                          <span className={badgeStyles.active}>Ativo</span>
                         </div>
                       </div>
 
@@ -307,14 +314,14 @@ export function AdminUsers() {
                         <button
                           type="button"
                           onClick={() => handleResetPassword(user.id)}
-                          className="rounded border border-slate-300 px-3 py-2 text-slate-700 cursor-pointer transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700"
+                          className={buttonStyles.secondary}
                         >
                           Resetar senha
                         </button>
                         <button
                           type="button"
                           onClick={() => handleAskDeactivate(user.id)}
-                          className="rounded bg-red-600 px-3 py-2 text-white cursor-pointer transition hover:bg-red-700"
+                          className={buttonStyles.destructive}
                         >
                           Desativar usuario
                         </button>
@@ -326,9 +333,9 @@ export function AdminUsers() {
             ) : null}
 
             {!loading && activeUsers.length > 0 ? (
-              <div className="hidden w-full border rounded overflow-visible sm:block">
+              <div className={tableContainerStyles}>
                 <table className="w-full text-slate-900 dark:text-slate-100">
-                  <thead className="bg-slate-100 dark:bg-slate-900">
+                  <thead className={tableHeadStyles}>
                     <tr className="text-slate-700 dark:text-slate-200">
                       <th className="text-left px-4 py-3">Nome</th>
                       <th className="text-left px-4 py-3">Email</th>
@@ -354,7 +361,7 @@ export function AdminUsers() {
                             <button
                               type="button"
                               onClick={() => handleOpenDropdown(user.id)}
-                              className="text-xl leading-none p-2 rounded cursor-pointer transition hover:text-gray-600 dark:hover:text-gray-300"
+                              className={buttonStyles.subtle}
                               aria-label={`Acoes para ${user.name}`}
                             >
                               ⚙
@@ -365,14 +372,14 @@ export function AdminUsers() {
                                 <button
                                   type="button"
                                   onClick={() => handleResetPassword(user.id)}
-                                  className="px-4 py-2 cursor-pointer text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left"
+                                  className="w-full px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
                                 >
                                   Resetar senha
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleAskDeactivate(user.id)}
-                                  className="px-4 py-2 cursor-pointer text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left"
+                                  className="w-full px-4 py-2 text-left text-sm text-red-700 transition hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30"
                                 >
                                   Desativar usuario
                                 </button>
@@ -400,7 +407,7 @@ export function AdminUsers() {
                 <button
                   type="button"
                   onClick={() => setConfirmUserId(null)}
-                  className="px-4 py-2 rounded-md border border-slate-300 text-slate-700 cursor-pointer transition hover:bg-slate-100"
+                  className={buttonStyles.secondary}
                 >
                   Cancelar
                 </button>
@@ -408,7 +415,7 @@ export function AdminUsers() {
                   type="button"
                   onClick={handleConfirmDeactivate}
                   disabled={processingUserId === confirmUserId}
-                  className="px-4 py-2 rounded-md bg-red-600 text-white cursor-pointer transition hover:bg-red-700 disabled:opacity-60"
+                  className={buttonStyles.destructive}
                 >
                   Desativar
                 </button>

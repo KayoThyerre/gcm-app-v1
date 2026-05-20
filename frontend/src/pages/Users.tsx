@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FeedbackMessage } from "../components/FeedbackMessage";
 import { api } from "../services/api";
 import { RequireRole } from "../routes/RequireRole";
+import { badgeStyles, tableContainerStyles, tableHeadStyles } from "../styles/ui";
 
 type User = {
   id: string;
@@ -89,7 +90,7 @@ export function Users() {
                     <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       Status
                     </p>
-                    <p className="font-medium text-green-600">Ativo</p>
+                    <span className={badgeStyles.active}>Ativo</span>
                   </div>
                 </div>
               </div>
@@ -106,9 +107,9 @@ export function Users() {
         ) : null}
 
         {!loading && users.length > 0 ? (
-        <div className="hidden bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 sm:block">
+        <div className={tableContainerStyles}>
           <table className="w-full text-sm text-slate-900 dark:text-slate-100">
-            <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+            <thead className={tableHeadStyles}>
               <tr>
                 <th className="text-left px-4 py-3 font-medium text-slate-700 dark:text-slate-200">
                   Nome
@@ -134,7 +135,7 @@ export function Users() {
                     {getRoleLabel(user.role)}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-green-600 font-medium">Ativo</span>
+                    <span className={badgeStyles.active}>Ativo</span>
                   </td>
                 </tr>
               ))}

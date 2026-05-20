@@ -8,6 +8,7 @@ import {
 } from "../components/scales/ScaleCalendarView";
 import { ScalePrintView } from "../components/scales/ScalePrintView";
 import { api } from "../services/api";
+import { buttonStyles, fieldStyles } from "../styles/ui";
 
 type ScaleMonth = {
   id: string;
@@ -229,7 +230,7 @@ export function ScaleView() {
           type="button"
           onClick={handlePrint}
           disabled={!selectedScaleMonth || loadingScaleData}
-          className="rounded-md bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className={buttonStyles.primary}
         >
           Imprimir / Salvar PDF
         </button>
@@ -257,7 +258,7 @@ export function ScaleView() {
               value={selectedScaleMonthId}
               onChange={(event) => setSelectedScaleMonthId(event.target.value)}
               disabled={loadingMonths || scaleMonths.length === 0}
-              className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 disabled:opacity-60 dark:bg-slate-800 dark:text-slate-100"
+              className={fieldStyles}
             >
               {scaleMonths.length === 0 ? (
                 <option value="">Nenhuma escala cadastrada</option>

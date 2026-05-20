@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { FeedbackMessage } from "../components/FeedbackMessage";
 import { api } from "../services/api";
+import { badgeStyles, buttonStyles, checkboxStyles, fieldStyles } from "../styles/ui";
 
 type Approach = {
   id: string;
@@ -186,14 +187,14 @@ export function ApproachedList() {
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
           placeholder="Buscar por nome, CPF ou RG..."
-          className="w-full rounded-md border px-4 py-2 bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+          className={fieldStyles}
         />
         <label className="inline-flex w-fit items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
           <input
             type="checkbox"
             checked={showOnlyConvicted}
             onChange={(event) => setShowOnlyConvicted(event.target.checked)}
-            className="h-4 w-4"
+            className={checkboxStyles}
           />
           Somente apenados
         </label>
@@ -247,6 +248,11 @@ export function ApproachedList() {
 
                       <div className="text-sm text-slate-500 dark:text-slate-400">
                         <p>Cadastrado em {formatDate(approach.createdAt)}</p>
+                        {approach.isConvicted ? (
+                          <span className={`mt-2 ${badgeStyles.warning}`}>
+                            Apenado
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                   </button>
@@ -265,7 +271,7 @@ export function ApproachedList() {
                   type="button"
                   disabled={safeCurrentPage === 1}
                   onClick={() => setCurrentPage((page) => page - 1)}
-                  className="px-4 py-2 rounded-md border border-slate-300 bg-white text-slate-700 cursor-pointer transition hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                  className={buttonStyles.secondary}
                 >
                   Anterior
                 </button>
@@ -273,7 +279,7 @@ export function ApproachedList() {
                   type="button"
                   disabled={safeCurrentPage >= totalPages}
                   onClick={() => setCurrentPage((page) => page + 1)}
-                  className="px-4 py-2 rounded-md border border-slate-300 bg-white text-slate-700 cursor-pointer transition hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                  className={buttonStyles.secondary}
                 >
                   Proximo
                 </button>
@@ -356,9 +362,15 @@ export function ApproachedList() {
                       <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                         Apenado
                       </p>
-                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                      <span
+                        className={
+                          visibleSelectedApproach.isConvicted
+                            ? badgeStyles.warning
+                            : badgeStyles.draft
+                        }
+                      >
                         {visibleSelectedApproach.isConvicted ? "Sim" : "Nao"}
-                      </p>
+                      </span>
                     </div>
 
                     <div>

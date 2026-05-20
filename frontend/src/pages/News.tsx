@@ -2,6 +2,14 @@
 import type { ChangeEvent, FormEvent } from "react";
 import { FeedbackMessage } from "../components/FeedbackMessage";
 import { api } from "../services/api";
+import {
+  badgeStyles,
+  buttonStyles,
+  checkboxStyles,
+  fieldStyles,
+  tableContainerStyles,
+  tableHeadStyles,
+} from "../styles/ui";
 
 type UploadNewsResponse = {
   url: string;
@@ -298,7 +306,7 @@ export function News() {
                 setIsDirty(true);
                 if (successMessage) setSuccessMessage(null);
               }}
-              className="border rounded-md px-3 py-2 w-full bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+              className={fieldStyles}
             />
           </div>
 
@@ -319,7 +327,7 @@ export function News() {
                 if (successMessage) setSuccessMessage(null);
               }}
               rows={8}
-              className="border rounded-md px-3 py-2 w-full bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+              className={fieldStyles}
             />
           </div>
 
@@ -341,7 +349,7 @@ export function News() {
               <button
                 type="button"
                 onClick={handleRemoveImage}
-                className="mb-3 text-sm text-red-600 cursor-pointer transition hover:text-red-700"
+                className="mb-3 text-sm font-medium text-red-600 transition hover:text-red-700 dark:text-red-300 dark:hover:text-red-200"
               >
                 Remover imagem
               </button>
@@ -352,7 +360,7 @@ export function News() {
               type="file"
               accept=".jpg,.jpeg,.png,.webp"
               onChange={handleImageChange}
-              className="border rounded-md px-3 py-2 w-full bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+              className={fieldStyles}
             />
           </div>
 
@@ -365,7 +373,7 @@ export function News() {
                 setIsDirty(true);
                 if (successMessage) setSuccessMessage(null);
               }}
-              className="h-4 w-4"
+              className={checkboxStyles}
             />
             Publicar noticia
           </label>
@@ -374,7 +382,7 @@ export function News() {
             <button
               type="submit"
               disabled={loading}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-blue-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+              className={buttonStyles.primary}
             >
               {loading
                 ? mode === "edit"
@@ -389,7 +397,7 @@ export function News() {
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="px-4 py-2 rounded-md border border-slate-300 text-slate-700 cursor-pointer transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                className={buttonStyles.secondary}
               >
                 Cancelar
               </button>
@@ -408,7 +416,7 @@ export function News() {
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder="Buscar noticia por titulo..."
-            className="w-full border rounded px-4 py-2 bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+            className={fieldStyles}
           />
         </div>
 
@@ -449,11 +457,7 @@ export function News() {
 
                     <div className="flex flex-col gap-3">
                       <span
-                        className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${
-                          news.published
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                            : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
-                        }`}
+                        className={news.published ? badgeStyles.published : badgeStyles.draft}
                       >
                         {news.published ? "Publicado" : "Rascunho"}
                       </span>
@@ -464,7 +468,7 @@ export function News() {
                           event.stopPropagation();
                           void handleDelete(news.id);
                         }}
-                        className="rounded bg-red-500 px-3 py-2 text-white cursor-pointer transition hover:bg-red-600"
+                        className={buttonStyles.destructive}
                       >
                         Excluir
                       </button>
@@ -477,9 +481,9 @@ export function News() {
         ) : null}
 
         {!loadingList && filteredNews.length > 0 ? (
-          <div className="hidden w-full border rounded overflow-x-auto sm:block">
+          <div className={tableContainerStyles}>
             <table className="w-full text-slate-900 dark:text-slate-100">
-              <thead className="bg-blue-600 text-white dark:bg-slate-900 dark:text-slate-200">
+              <thead className={tableHeadStyles}>
                 <tr>
                   <th className="text-left px-4 py-3">Titulo</th>
                   <th className="text-left px-4 py-3">Status</th>
@@ -503,7 +507,9 @@ export function News() {
                     >
                       <td className="px-4 py-3">{news.title}</td>
                       <td className="px-4 py-3">
-                        {news.published ? "Publicado" : "Rascunho"}
+                        <span className={news.published ? badgeStyles.published : badgeStyles.draft}>
+                          {news.published ? "Publicado" : "Rascunho"}
+                        </span>
                       </td>
                       <td className="px-4 py-3">
                         {new Date(news.createdAt).toLocaleDateString("pt-BR")}
@@ -515,7 +521,7 @@ export function News() {
                             event.stopPropagation();
                             void handleDelete(news.id);
                           }}
-                          className="bg-red-500 text-white px-3 py-1 rounded cursor-pointer transition hover:bg-red-600"
+                          className={buttonStyles.destructive}
                         >
                           Excluir
                         </button>
@@ -539,7 +545,7 @@ export function News() {
               type="button"
               disabled={page === 1 || loadingList}
               onClick={() => setPage((currentPage) => currentPage - 1)}
-              className="px-4 py-2 rounded-md bg-blue-600 text-white cursor-pointer transition duration-200 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 dark:border dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 dark:disabled:hover:bg-slate-700"
+              className={buttonStyles.secondary}
             >
               Anterior
             </button>
@@ -547,7 +553,7 @@ export function News() {
               type="button"
               disabled={page * LIMIT >= total || loadingList}
               onClick={() => setPage((currentPage) => currentPage + 1)}
-              className="px-4 py-2 rounded-md bg-blue-600 text-white cursor-pointer transition duration-200 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 dark:border dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 dark:disabled:hover:bg-slate-700"
+              className={buttonStyles.secondary}
             >
               Proximo
             </button>

@@ -1,10 +1,21 @@
-﻿type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
+import { buttonStyles } from "../styles/ui";
 
-export function Button({ children, ...props }: ButtonProps) {
+type ButtonVariant = "primary" | "secondary" | "destructive" | "subtle";
+
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: ButtonVariant;
+};
+
+export function Button({
+  children,
+  className = "",
+  variant = "primary",
+  ...props
+}: ButtonProps) {
   return (
     <button
       {...props}
-      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-colors duration-200"
+      className={`w-full ${buttonStyles[variant]} ${className}`}
     >
       {children}
     </button>

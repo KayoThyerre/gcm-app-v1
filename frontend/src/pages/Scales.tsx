@@ -11,6 +11,7 @@ import {
 } from "../components/scales/ScaleCalendarView";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
+import { badgeStyles, buttonStyles, fieldStyles } from "../styles/ui";
 
 type ScaleMonth = {
   id: string;
@@ -762,7 +763,7 @@ export function Scales() {
               setErrorMessage(null);
               setSuccessMessage(null);
             }}
-            className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+            className={fieldStyles}
           >
             {monthOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -785,7 +786,7 @@ export function Scales() {
               setErrorMessage(null);
               setSuccessMessage(null);
             }}
-            className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+            className={fieldStyles}
           />
         </div>
 
@@ -793,7 +794,7 @@ export function Scales() {
           type="button"
           onClick={() => void handleGenerateScale()}
           disabled={submitting}
-          className="rounded-md bg-blue-600 px-4 py-2 text-white cursor-pointer transition hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+          className={buttonStyles.primary}
         >
           {submitting ? "Gerando..." : "Gerar escala"}
         </button>
@@ -802,7 +803,7 @@ export function Scales() {
           type="button"
           onClick={() => void handleDeleteScaleMonth()}
           disabled={!selectedScaleMonth || deleting}
-          className="rounded-md bg-red-600 px-4 py-2 text-white cursor-pointer transition hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
+          className={buttonStyles.destructive}
         >
           {deleting ? "Excluindo..." : "Excluir escala"}
         </button>
@@ -854,7 +855,7 @@ export function Scales() {
                         </div>
 
                         {existingConfig ? (
-                          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                          <span className={badgeStyles.active}>
                             Configurada
                           </span>
                         ) : null}
@@ -867,7 +868,7 @@ export function Scales() {
                           value={form.supervisorName}
                           maxLength={150}
                           onChange={(event) => updateTeamForm(teamName, "supervisorName", event.target.value)}
-                          className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                          className={fieldStyles}
                         />
                       </div>
 
@@ -878,7 +879,7 @@ export function Scales() {
                           value={form.radioOperatorName}
                           maxLength={150}
                           onChange={(event) => updateTeamForm(teamName, "radioOperatorName", event.target.value)}
-                          className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                          className={fieldStyles}
                         />
                       </div>
 
@@ -890,7 +891,7 @@ export function Scales() {
                           onChange={(event) => updateTeamForm(teamName, "members", event.target.value)}
                           rows={4}
                           placeholder="Separe os nomes por virgula ou por linha"
-                          className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                          className={fieldStyles}
                         />
                       </div>
 
@@ -899,7 +900,7 @@ export function Scales() {
                         <select
                           value={form.initialCycle}
                           onChange={(event) => updateTeamForm(teamName, "initialCycle", event.target.value as InitialCycle)}
-                          className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                          className={fieldStyles}
                         >
                           {initialCycleOptions.map((option) => (
                             <option key={option} value={option}>
@@ -919,7 +920,7 @@ export function Scales() {
                         type="button"
                         onClick={() => void handleSaveTeam(teamName)}
                         disabled={savingTeam === teamName || loadingTeams}
-                        className="rounded-md bg-blue-600 px-4 py-2 text-white cursor-pointer transition hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className={buttonStyles.primary}
                       >
                         {savingTeam === teamName ? "Salvando..." : "Salvar equipe"}
                       </button>
@@ -951,7 +952,7 @@ export function Scales() {
                       setVacationPersonKey("");
                       setVacationMessage(null);
                     }}
-                    className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                    className={fieldStyles}
                   >
                     {teamNames.map((teamName) => (
                       <option key={teamName} value={teamName}>
@@ -969,7 +970,7 @@ export function Scales() {
                       setVacationPersonKey(event.target.value);
                       setVacationMessage(null);
                     }}
-                    className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                    className={fieldStyles}
                   >
                     <option value="">Selecione uma pessoa</option>
                     {vacationPersonOptions.map((option) => (
@@ -991,7 +992,7 @@ export function Scales() {
                       setVacationStartDay(event.target.value);
                       setVacationMessage(null);
                     }}
-                    className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                    className={fieldStyles}
                   />
                 </div>
 
@@ -1006,7 +1007,7 @@ export function Scales() {
                       setVacationEndDay(event.target.value);
                       setVacationMessage(null);
                     }}
-                    className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                    className={fieldStyles}
                   />
                 </div>
               </div>
@@ -1027,7 +1028,7 @@ export function Scales() {
                 type="button"
                 onClick={() => void handleLaunchVacation()}
                 disabled={vacationSubmitting || loadingTeams || vacationPersonOptions.length === 0}
-                className="rounded-md bg-blue-600 px-4 py-2 text-white cursor-pointer transition hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                className={buttonStyles.primary}
               >
                 {vacationSubmitting ? "Lancando..." : "Salvar ferias"}
               </button>
@@ -1066,7 +1067,7 @@ export function Scales() {
               <select
                 value={overrideValue}
                 onChange={(event) => setOverrideValue(event.target.value as ScaleCellValue)}
-                className="w-full rounded-md border px-3 py-2 bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                className={fieldStyles}
               >
                 {overrideValueOptions.map((option) => (
                   <option key={option} value={option}>
@@ -1087,7 +1088,7 @@ export function Scales() {
                 type="button"
                 onClick={() => void handleSaveOverride()}
                 disabled={savingOverride}
-                className="rounded-md bg-blue-600 px-4 py-2 text-white cursor-pointer transition hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                className={buttonStyles.primary}
               >
                 {savingOverride ? "Salvando..." : "Salvar"}
               </button>
@@ -1097,7 +1098,7 @@ export function Scales() {
                   type="button"
                   onClick={() => void handleRemoveOverride()}
                   disabled={removingOverride}
-                  className="rounded-md bg-red-600 px-4 py-2 text-white cursor-pointer transition hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className={buttonStyles.destructive}
                 >
                   {removingOverride ? "Removendo..." : "Remover override"}
                 </button>
@@ -1107,7 +1108,7 @@ export function Scales() {
                 type="button"
                 onClick={handleCloseOverrideModal}
                 disabled={savingOverride || removingOverride}
-                className="rounded-md border border-slate-300 px-4 py-2 text-slate-700 cursor-pointer transition hover:bg-slate-100 disabled:opacity-60 disabled:cursor-not-allowed dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                className={buttonStyles.secondary}
               >
                 Cancelar
               </button>

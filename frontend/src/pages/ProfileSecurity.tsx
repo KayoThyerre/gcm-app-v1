@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FeedbackMessage } from "../components/FeedbackMessage";
 import { useTheme, type Theme } from "../hooks/useTheme";
 import { api } from "../services/api";
+import { buttonStyles, fieldStyles } from "../styles/ui";
 
 export function ProfileSecurity() {
   const navigate = useNavigate();
@@ -60,7 +61,7 @@ export function ProfileSecurity() {
         <button
           type="button"
           onClick={() => navigate("/settings/profile")}
-          className="text-blue-600 hover:text-blue-700 cursor-pointer font-medium mb-4"
+          className="mb-4 text-sm font-medium text-blue-600 transition hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200"
         >
           ← Voltar ao perfil
         </button>
@@ -93,7 +94,7 @@ export function ProfileSecurity() {
             value={currentPassword}
             maxLength={128}
             onChange={(event) => setCurrentPassword(event.target.value)}
-            className="border rounded-md px-3 py-2 w-full bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+            className={fieldStyles}
           />
         </div>
 
@@ -110,7 +111,7 @@ export function ProfileSecurity() {
             value={newPassword}
             maxLength={128}
             onChange={(event) => setNewPassword(event.target.value)}
-            className="border rounded-md px-3 py-2 w-full bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+            className={fieldStyles}
           />
         </div>
 
@@ -127,14 +128,14 @@ export function ProfileSecurity() {
             value={confirmNewPassword}
             maxLength={128}
             onChange={(event) => setConfirmNewPassword(event.target.value)}
-            className="border rounded-md px-3 py-2 w-full bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+            className={fieldStyles}
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-blue-700 transition disabled:opacity-60"
+          className={buttonStyles.primary}
         >
           {loading ? "Alterando..." : "Salvar"}
         </button>

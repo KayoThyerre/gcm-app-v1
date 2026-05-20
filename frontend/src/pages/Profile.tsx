@@ -5,6 +5,7 @@ import { FeedbackMessage } from "../components/FeedbackMessage";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme, type Theme } from "../hooks/useTheme";
 import { api } from "../services/api";
+import { buttonStyles, fieldStyles } from "../styles/ui";
 
 type ProfileResponse = {
   id: string;
@@ -181,7 +182,7 @@ export function Profile() {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadingAvatar}
-            className="mt-2 text-sm text-blue-400 hover:text-blue-300 cursor-pointer font-medium disabled:opacity-60"
+            className="mt-2 text-sm font-medium text-blue-600 transition hover:text-blue-700 disabled:opacity-60 dark:text-blue-300 dark:hover:text-blue-200"
           >
             {uploadingAvatar ? "Enviando..." : "Alterar foto"}
           </button>
@@ -220,7 +221,7 @@ export function Profile() {
               setName(event.target.value);
               if (successMessage) setSuccessMessage(null);
             }}
-            className="border rounded-md px-3 py-2 w-full bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+            className={fieldStyles}
           />
         </div>
 
@@ -236,7 +237,7 @@ export function Profile() {
             type="email"
             value={email}
             readOnly
-            className="border rounded-md px-3 py-2 w-full bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+            className={fieldStyles}
           />
         </div>
 
@@ -256,14 +257,14 @@ export function Profile() {
               setPhone(event.target.value);
               if (successMessage) setSuccessMessage(null);
             }}
-            className="border rounded-md px-3 py-2 w-full bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+            className={fieldStyles}
           />
         </div>
 
         <button
           type="submit"
           disabled={saving}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-blue-700 transition disabled:opacity-60"
+          className={buttonStyles.primary}
         >
           {saving ? "Salvando..." : "Salvar"}
         </button>
@@ -279,7 +280,7 @@ export function Profile() {
         <button
           type="button"
           onClick={() => navigate("/settings/security")}
-          className="mt-6 text-blue-400 hover:text-blue-300 cursor-pointer font-medium"
+          className={`mt-6 ${buttonStyles.secondary}`}
         >
           Alterar senha
         </button>
