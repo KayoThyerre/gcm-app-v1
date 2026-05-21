@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { FeedbackMessage } from "../components/FeedbackMessage";
+import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import { RequireRole } from "../routes/RequireRole";
 import { badgeStyles, tableContainerStyles, tableHeadStyles } from "../styles/ui";
@@ -51,14 +52,10 @@ export function Users() {
   return (
     <RequireRole allowedRoles={["ADMIN", "DEV"]}>
       <div className="flex flex-col gap-6">
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-            Usuarios
-          </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Lista de usuarios cadastrados no sistema
-          </p>
-        </div>
+        <PageHeader
+          title="Usuarios"
+          description="Consulte os usuarios cadastrados e seus dados principais."
+        />
 
         <div className="block space-y-3 sm:hidden">
           {users.map((user) => (

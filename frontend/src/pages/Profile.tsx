@@ -2,6 +2,7 @@
 import type { ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { FeedbackMessage } from "../components/FeedbackMessage";
+import { PageHeader } from "../components/PageHeader";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme, type Theme } from "../hooks/useTheme";
 import { api } from "../services/api";
@@ -172,12 +173,10 @@ export function Profile() {
         )}
 
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-            Perfil
-          </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Dados do usuario logado
-          </p>
+          <PageHeader
+            title="Perfil"
+            description="Atualize seus dados de contato e foto."
+          />
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}

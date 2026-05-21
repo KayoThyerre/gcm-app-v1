@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { FeedbackMessage } from "../components/FeedbackMessage";
+import { PageHeader } from "../components/PageHeader";
 import {
   ScaleCalendarView,
   getScaleCellLabel,
@@ -734,14 +735,10 @@ export function Scales() {
 
   return (
     <div className="mx-auto min-w-0 max-w-7xl space-y-8 overflow-x-hidden p-4 sm:overflow-x-visible sm:p-8">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-          Escalas mensais
-        </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          Configure as equipes do mes, aplique overrides por celula e visualize a escala pelo modelo Excel.
-        </p>
-      </div>
+      <PageHeader
+        title="Escalas mensais"
+        description="Configure equipes, ferias e ajustes da escala mensal."
+      />
 
       {errorMessage ? (
         <FeedbackMessage variant="error">{errorMessage}</FeedbackMessage>

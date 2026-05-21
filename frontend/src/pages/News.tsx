@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { FeedbackMessage } from "../components/FeedbackMessage";
+import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 import {
   badgeStyles,
@@ -263,22 +264,14 @@ export function News() {
   return (
     <div className="max-w-5xl mx-auto p-4 space-y-10 sm:p-8">
       <div className="space-y-6">
-        <div>
-          <h1
-            className={`text-2xl font-semibold ${
-              mode === "edit"
-                ? "text-blue-600 dark:text-blue-400"
-                : "text-slate-900 dark:text-slate-100"
-            }`}
-          >
-            {mode === "edit" ? "Editando noticia" : "Criar noticia"}
-          </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            {mode === "edit"
+        <PageHeader
+          title={mode === "edit" ? "Editando noticia" : "Criar noticia"}
+          description={
+            mode === "edit"
               ? "Atualize os dados da noticia selecionada."
-              : "Cadastre uma nova noticia para a area publica."}
-          </p>
-        </div>
+              : "Cadastre uma nova noticia para a area publica."
+          }
+        />
 
         {errorMessage ? (
           <FeedbackMessage variant="error">{errorMessage}</FeedbackMessage>

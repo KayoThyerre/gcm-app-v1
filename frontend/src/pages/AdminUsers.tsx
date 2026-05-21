@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { approveUser, getUsers, rejectUser } from "../api/users";
 import { FeedbackMessage } from "../components/FeedbackMessage";
+import { PageHeader } from "../components/PageHeader";
 import { RequireRole } from "../routes/RequireRole";
 import {
   badgeStyles,
@@ -121,6 +122,11 @@ export function AdminUsers() {
     <RequireRole allowedRoles={["ADMIN", "DEV"]}>
       <>
         <div className="max-w-5xl mx-auto p-4 space-y-10 sm:p-8">
+          <PageHeader
+            title="Gestao de usuarios"
+            description="Aprove, recuse ou acompanhe usuarios com acesso ao sistema."
+          />
+
           <div>
             <input
               type="text"

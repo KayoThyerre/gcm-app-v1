@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { FeedbackMessage } from "../components/FeedbackMessage";
+import { PageHeader } from "../components/PageHeader";
 import {
   ScaleCalendarView,
   type ScaleCellOverride,
@@ -216,25 +217,21 @@ export function ScaleView() {
       </style>
 
       <div data-screen-root className="max-w-7xl mx-auto p-4 space-y-8 sm:p-8">
-      <div data-print-hide className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-            Escala Mensal de Servico
-          </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Consulta de escalas em modo leitura, separada da administracao do modulo.
-          </p>
+        <div data-print-hide>
+          <PageHeader
+            title="Escala mensal de servico"
+            description="Consulte escalas em modo leitura e gere uma versao para impressao."
+          >
+            <button
+              type="button"
+              onClick={handlePrint}
+              disabled={!selectedScaleMonth || loadingScaleData}
+              className={buttonStyles.primary}
+            >
+              Imprimir / Salvar PDF
+            </button>
+          </PageHeader>
         </div>
-
-        <button
-          type="button"
-          onClick={handlePrint}
-          disabled={!selectedScaleMonth || loadingScaleData}
-          className={buttonStyles.primary}
-        >
-          Imprimir / Salvar PDF
-        </button>
-      </div>
 
       <div data-print-hide className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
         Use a opcao Salvar como PDF no dialogo de impressao do navegador.

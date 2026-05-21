@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { FeedbackMessage } from "../components/FeedbackMessage";
+import { PageHeader } from "../components/PageHeader";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
 import {
@@ -361,23 +362,14 @@ export function Approaches() {
   return (
     <div className="max-w-5xl mx-auto p-4 space-y-10 sm:p-8">
       <div className="space-y-6">
-        <div>
-          <h1
-            className={
-              "text-2xl font-semibold " +
-              (mode === "edit"
-                ? "text-blue-600 dark:text-blue-400"
-                : "text-slate-900 dark:text-slate-100")
-            }
-          >
-            {mode === "edit" ? "Editando abordagem" : "Cadastrar abordagem"}
-          </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            {mode === "edit"
+        <PageHeader
+          title={mode === "edit" ? "Editando abordagem" : "Cadastrar abordagem"}
+          description={
+            mode === "edit"
               ? "Atualize os dados da abordagem selecionada."
-              : "Cadastre uma nova pessoa abordada."}
-          </p>
-        </div>
+              : "Cadastre uma nova pessoa abordada."
+          }
+        />
 
         {errorMessage ? (
           <FeedbackMessage variant="error">{errorMessage}</FeedbackMessage>

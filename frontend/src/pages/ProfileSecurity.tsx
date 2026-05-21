@@ -2,6 +2,7 @@
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { FeedbackMessage } from "../components/FeedbackMessage";
+import { PageHeader } from "../components/PageHeader";
 import { useTheme, type Theme } from "../hooks/useTheme";
 import { api } from "../services/api";
 import { buttonStyles, fieldStyles } from "../styles/ui";
@@ -65,12 +66,10 @@ export function ProfileSecurity() {
         >
           ← Voltar ao perfil
         </button>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-          Seguranca da conta
-        </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          Atualize sua senha de acesso.
-        </p>
+        <PageHeader
+          title="Seguranca da conta"
+          description="Atualize sua senha de acesso."
+        />
       </div>
 
       {errorMessage ? (

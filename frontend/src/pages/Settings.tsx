@@ -1,3 +1,4 @@
+import { PageHeader } from "../components/PageHeader";
 import { RequireRole } from "../routes/RequireRole";
 import { useTheme, type Theme } from "../hooks/useTheme";
 
@@ -6,8 +7,12 @@ export function Settings() {
 
   return (
     <RequireRole allowedRoles={["ADMIN", "DEV"]}>
-      <div className="space-y-4">
-        <p className="text-slate-700 dark:text-slate-300">Configuracoes gerais.</p>
+      <div className="space-y-6">
+        <PageHeader
+          title="Configuracoes"
+          description="Ajustes gerais da experiencia administrativa."
+        />
+
         <div className="space-y-2">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
             Theme
