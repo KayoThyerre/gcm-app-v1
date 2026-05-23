@@ -17,6 +17,8 @@ import scaleOverrideRoutes from "./routes/scaleOverride.routes";
 
 export const app = express();
 
+app.set("trust proxy", 1);
+
 const uploadsPath = path.resolve(process.cwd(), "uploads");
 const newsUploadsPath = path.join(uploadsPath, "news");
 

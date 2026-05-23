@@ -6,15 +6,9 @@ import { randomBytes } from "crypto";
 import rateLimit from "express-rate-limit";
 import { FIELD_LIMITS, validateMaxLength } from "../utils/validation";
 import { env } from "../config/env";
+import { sendVerificationEmail } from "../services/verificationEmail.service";
 
 export const authRoutes = Router();
-function logVerificationTokenIssued(context: "register" | "resend-verification") {
-  if (!env.isProduction) {
-    console.info(
-      `[auth/${context}] Token de verificacao gerado. Link sensivel omitido dos logs.`
-    );
-  }
-}
 
 const resendVerificationLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
@@ -68,7 +62,7 @@ authRoutes.post("/register", async (req, res) => {
   const verificationToken = randomBytes(32).toString("hex");
   const verificationTokenExpires = new Date(Date.now() + 60 * 60 * 1000);
 
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       name,
       email,
@@ -80,9 +74,17 @@ authRoutes.post("/register", async (req, res) => {
       verificationTokenExpires,
       lastVerificationSentAt: new Date(),
     },
+    select: {
+      email: true,
+      name: true,
+    },
   });
 
-  logVerificationTokenIssued("register");
+  await sendVerificationEmail({
+    to: user.email,
+    name: user.name,
+    token: verificationToken,
+  });
 
   return res.status(201).json({
     message: "Cadastro realizado. Verifique seu e-mail para continuar.",
@@ -154,6 +156,8 @@ authRoutes.post("/resend-verification", resendVerificationLimiter, async (req, r
     where: { email },
     select: {
       id: true,
+      email: true,
+      name: true,
       emailVerified: true,
       lastVerificationSentAt: true,
     },
@@ -193,7 +197,11 @@ authRoutes.post("/resend-verification", resendVerificationLimiter, async (req, r
     },
   });
 
-  logVerificationTokenIssued("resend-verification");
+  await sendVerificationEmail({
+    to: user.email,
+    name: user.name,
+    token: verificationToken,
+  });
 
   return res.status(200).json({
     message: "Se o e-mail estiver cadastrado, você receberá instruções.",
