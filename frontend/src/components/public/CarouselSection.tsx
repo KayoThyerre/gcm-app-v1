@@ -2,7 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MainLayout from '../../layouts/public/MainLayout'
 import { api } from '../../services/api'
-import { getDefaultImage, getPreview } from './NewsSection'
+import {
+  getNewsImageFallback,
+  getNewsImageSrc,
+  getPreview,
+  handleNewsImageError,
+} from './NewsSection'
 
 type NewsItem = {
   id: string
@@ -64,7 +69,8 @@ function CarouselSection() {
             <div className="mt-8 overflow-x-auto pb-2">
               <div className="flex gap-6">
                 {visibleNews.map((item, index) => {
-                  const imageSrc = item.imageUrl || getDefaultImage()
+                  const imageSrc = getNewsImageSrc(item)
+                  const fallbackSrc = getNewsImageFallback(item)
 
                   return (
                     <article
@@ -76,6 +82,7 @@ function CarouselSection() {
                       <img
                         src={imageSrc}
                         alt={item.title}
+                        onError={(event) => handleNewsImageError(event, fallbackSrc)}
                         className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105 group-hover:brightness-90"
                       />
                       <div className="absolute inset-0 bg-black/50 pointer-events-none" />

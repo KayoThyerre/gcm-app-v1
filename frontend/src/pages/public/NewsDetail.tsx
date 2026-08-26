@@ -1,7 +1,11 @@
 ﻿import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Navbar from '../../components/public/Navbar'
-import { getDefaultImage } from '../../components/public/NewsSection'
+import {
+  getNewsImageFallback,
+  getNewsImageSrc,
+  handleNewsImageError,
+} from '../../components/public/NewsSection'
 import { PublicLayout } from '../../layouts/PublicLayout'
 import MainLayout from '../../layouts/public/MainLayout'
 import { api } from '../../services/api'
@@ -78,8 +82,11 @@ function NewsDetail() {
               {!loading && news ? (
                 <article className="space-y-8">
                   <img
-                    src={news.imageUrl || getDefaultImage()}
+                    src={getNewsImageSrc(news)}
                     alt={news.title}
+                    onError={(event) =>
+                      handleNewsImageError(event, getNewsImageFallback(news))
+                    }
                     className="h-[360px] w-full rounded-xl object-cover"
                   />
 

@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import type { SyntheticEvent } from 'react'
 import { api } from '../../services/api'
 
 type NewsItem = {
@@ -14,10 +15,51 @@ type NewsListResponse = {
   data: NewsItem[]
 }
 
-export function getDefaultImage() {
-  const images = ['/operacao-comunitaria.png', '/operacao-escolar.png']
-  const index = Math.floor(Math.random() * images.length)
-  return images[index]
+type NewsImageSource = Pick<NewsItem, 'id' | 'title' | 'imageUrl' | 'createdAt'>
+
+const defaultNewsImages = ['/operacao-comunitaria.png', '/operacao-escolar.png']
+
+function getStableImageIndex(seed: string) {
+  let hash = 0
+
+  for (let index = 0; index < seed.length; index++) {
+    hash = (hash * 31 + seed.charCodeAt(index)) % defaultNewsImages.length
+  }
+
+  return hash
+}
+
+function getNewsImageSeed(news: NewsImageSource) {
+  return `${news.id}-${news.title}-${news.createdAt}`
+}
+
+export function getDefaultImage(seed = '') {
+  if (!seed) {
+    return defaultNewsImages[0]
+  }
+
+  return defaultNewsImages[getStableImageIndex(seed)]
+}
+
+export function getNewsImageFallback(news: NewsImageSource) {
+  return getDefaultImage(getNewsImageSeed(news))
+}
+
+export function getNewsImageSrc(news: NewsImageSource) {
+  const imageUrl = news.imageUrl?.trim()
+
+  return imageUrl || getNewsImageFallback(news)
+}
+
+export function handleNewsImageError(
+  event: SyntheticEvent<HTMLImageElement>,
+  fallbackSrc: string
+) {
+  if (event.currentTarget.getAttribute('src') === fallbackSrc) {
+    return
+  }
+
+  event.currentTarget.src = fallbackSrc
 }
 
 function formatDate(date: string) {
@@ -109,7 +151,8 @@ function NewsSection() {
     )
   }
 
-  const featuredImageSrc = featured.imageUrl || getDefaultImage()
+  const featuredImageSrc = getNewsImageSrc(featured)
+  const featuredFallbackSrc = getNewsImageFallback(featured)
 
   return (
     <section className="bg-white py-16">
@@ -126,6 +169,7 @@ function NewsSection() {
           <img
             src={featuredImageSrc}
             alt={featured.title}
+            onError={(event) => handleNewsImageError(event, featuredFallbackSrc)}
             className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105 group-hover:brightness-90"
           />
           <div className="absolute inset-0 bg-black/50 pointer-events-none" />
@@ -159,7 +203,8 @@ function NewsSection() {
           ) : null}
 
           {visibleNews.map((item, index) => {
-            const imageSrc = item.imageUrl || getDefaultImage()
+            const imageSrc = getNewsImageSrc(item)
+            const fallbackSrc = getNewsImageFallback(item)
 
             return (
               <article
@@ -171,6 +216,7 @@ function NewsSection() {
                 <img
                   src={imageSrc}
                   alt={item.title}
+                  onError={(event) => handleNewsImageError(event, fallbackSrc)}
                   className="h-28 w-full rounded-lg object-cover sm:w-40"
                 />
 
